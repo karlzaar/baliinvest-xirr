@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { InvestmentData, XIRRResult, CashFlowEntry } from '../types/investment';
 import { calculateInvestmentReturn } from '../utils/xirr';
 import { useExchangeRates } from './useExchangeRates';
@@ -52,6 +52,21 @@ export function useInvestment() {
     lastUpdatedFormatted: ratesLastUpdated,
     refreshRates 
   } = useExchangeRates();
+
+  // Load saved draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("baliinvest_draft");
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft.data) {
+          setData(draft.data);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load draft:", e);
+    }
+  }, []);
   
   const currency = data.property.currency;
   const rate = getRate(currency);
