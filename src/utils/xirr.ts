@@ -59,6 +59,7 @@ export function calculateXIRR(cashFlows: CashFlow[], guess: number = 0.1): numbe
 
 /**
  * Generate payment schedule based on investment data
+ * All amounts are in IDR
  */
 export function generatePaymentSchedule(data: InvestmentData): CashFlow[] {
   const cashFlows: CashFlow[] = [];
@@ -120,6 +121,7 @@ export function generatePaymentSchedule(data: InvestmentData): CashFlow[] {
 
 /**
  * Calculate full XIRR result with metrics
+ * All amounts are in IDR
  */
 export function calculateInvestmentReturn(data: InvestmentData): XIRRResult {
   const cashFlows = generatePaymentSchedule(data);

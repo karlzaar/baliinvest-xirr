@@ -2,9 +2,11 @@ import type { PropertyDetails as PropertyDetailsType } from '../../types/investm
 
 interface Props {
   data: PropertyDetailsType;
+  displayPrice: string;
+  currencySymbol: string;
+  exchangeRate: number;
   onUpdate: <K extends keyof PropertyDetailsType>(key: K, value: PropertyDetailsType[K]) => void;
-  ratesLoading?: boolean;
-  lastUpdated?: Date | null;
+  onPriceChange: (displayAmount: number) => void;
 }
 
 const LOCATIONS = [
@@ -16,29 +18,22 @@ const LOCATIONS = [
   'Nusa Dua, Bali'
 ];
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  IDR: 'Rp',
-  USD: '$',
-  AUD: 'A$',
-  EUR: '€'
-};
-
-export function PropertyDetails({ data, onUpdate, ratesLoading, lastUpdated }: Props) {
-  const currencySymbol = CURRENCY_SYMBOLS[data.currency] || 'Rp';
+export function PropertyDetails({ 
+  data, 
+  displayPrice, 
+  currencySymbol, 
+  exchangeRate,
+  onUpdate, 
+  onPriceChange 
+}: Props) {
   
-  const formatNumber = (num: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      maximumFractionDigits: data.currency === 'IDR' ? 0 : 2,
-    }).format(num);
-  };
-
   const parseNumber = (str: string): number => {
     return parseFloat(str.replace(/[^0-9.-]/g, '')) || 0;
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseNumber(e.target.value);
-    onUpdate('totalPrice', value);
+    const displayAmount = parseNumber(e.target.value);
+    onPriceChange(displayAmount);
   };
 
   return (
@@ -93,7 +88,7 @@ export function PropertyDetails({ data, onUpdate, ratesLoading, lastUpdated }: P
             </span>
             <input
               type="text"
-              value={formatNumber(data.totalPrice)}
+              value={displayPrice}
               onChange={handlePriceChange}
               className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg placeholder-text-secondary/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
             />
@@ -116,22 +111,8 @@ export function PropertyDetails({ data, onUpdate, ratesLoading, lastUpdated }: P
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-text-secondary">Base Currency</span>
             <span className="text-xs text-primary flex items-center gap-1">
-              {ratesLoading ? (
-                <>
-                  <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
-                  Loading rates...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                  Live Rates Active
-                  {lastUpdated && (
-                    <span className="text-text-secondary ml-1">
-                      (updated {lastUpdated.toLocaleTimeString()})
-                    </span>
-                  )}
-                </>
-              )}
+              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+              {data.currency !== 'IDR' ? `1 ${data.currency} = ${exchangeRate.toLocaleString()} IDR` : 'Base Currency'}
             </span>
           </div>
           <div className="relative">
@@ -150,7 +131,7 @@ export function PropertyDetails({ data, onUpdate, ratesLoading, lastUpdated }: P
             </span>
           </div>
           <p className="text-xs text-text-secondary/70">
-            Changing currency will automatically convert all amounts using live exchange rates.
+            All calculations are performed in IDR. Changing currency only affects display.
           </p>
         </label>
       </div>

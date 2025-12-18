@@ -13,20 +13,30 @@ function App() {
     data,
     result,
     updateProperty,
+    updatePrice,
+    updateExitPrice,
     updatePayment,
     updateExit,
     addCashFlow,
     removeCashFlow,
     updateCashFlow,
-    ratesLoading,
-    lastUpdated
+    updateCashFlowAmount,
+    toDisplayCurrency,
+    getCurrencySymbol,
+    formatAmount,
+    formatAbbreviated,
+    exchangeRate
   } = useInvestment();
 
   const handleCalculate = () => {
-    // The calculation is already reactive, but we can add feedback here
     console.log('XIRR Result:', result);
-    // Could trigger a toast notification or detailed breakdown modal
+    console.log('Data (all in IDR):', data);
   };
+
+  // Format display values
+  const currencySymbol = getCurrencySymbol();
+  const displayPrice = formatAmount(data.property.totalPrice);
+  const displayExitPrice = formatAmount(data.exit.projectedSalesPrice);
 
   return (
     <div className="bg-[#112217] text-white font-display overflow-x-hidden antialiased min-h-screen flex flex-col">
@@ -49,31 +59,41 @@ function App() {
             {/* Left Column - Forms */}
             <div className="lg:col-span-8 flex flex-col gap-8">
               <PropertyDetails 
-                data={data.property} 
+                data={data.property}
+                displayPrice={displayPrice}
+                currencySymbol={currencySymbol}
+                exchangeRate={exchangeRate}
                 onUpdate={updateProperty}
-                ratesLoading={ratesLoading}
-                lastUpdated={lastUpdated}
+                onPriceChange={updatePrice}
               />
               
               <PaymentTerms 
                 data={data.payment}
-                property={data.property}
+                totalPriceIDR={data.property.totalPrice}
+                currencySymbol={currencySymbol}
+                formatAmount={formatAmount}
                 onUpdate={updatePayment}
               />
               
               <ExitStrategy
                 data={data.exit}
-                totalPrice={data.property.totalPrice}
-                currency={data.property.currency}
+                totalPriceIDR={data.property.totalPrice}
+                displayExitPrice={displayExitPrice}
+                currencySymbol={currencySymbol}
+                formatAmount={formatAmount}
                 onUpdate={updateExit}
+                onExitPriceChange={updateExitPrice}
               />
               
               <CashFlows
                 entries={data.additionalCashFlows}
-                currency={data.property.currency}
+                currencySymbol={currencySymbol}
+                formatAmount={formatAmount}
+                toDisplayCurrency={toDisplayCurrency}
                 onAdd={addCashFlow}
                 onRemove={removeCashFlow}
                 onUpdate={updateCashFlow}
+                onAmountChange={updateCashFlowAmount}
               />
             </div>
 
@@ -83,6 +103,7 @@ function App() {
                 result={result}
                 location={data.property.location}
                 currency={data.property.currency}
+                formatAbbreviated={formatAbbreviated}
                 onCalculate={handleCalculate}
               />
             </div>

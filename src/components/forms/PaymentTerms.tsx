@@ -1,32 +1,17 @@
-import type { PaymentTerms as PaymentTermsType, PropertyDetails } from '../../types/investment';
+import type { PaymentTerms as PaymentTermsType } from '../../types/investment';
 
 interface Props {
   data: PaymentTermsType;
-  property: PropertyDetails;
+  totalPriceIDR: number;
+  currencySymbol: string;
+  formatAmount: (idrAmount: number) => string;
   onUpdate: <K extends keyof PaymentTermsType>(key: K, value: PaymentTermsType[K]) => void;
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  IDR: 'Rp',
-  USD: '$',
-  AUD: 'A$',
-  EUR: '€'
-};
-
-export function PaymentTerms({ data, property, onUpdate }: Props) {
-  const currencySymbol = CURRENCY_SYMBOLS[property.currency] || 'Rp';
-  
-  const formatNumber = (num: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      maximumFractionDigits: property.currency === 'IDR' ? 0 : 2,
-    }).format(num);
-  };
-
-  const downPaymentAmount = property.totalPrice * (data.downPaymentPercent / 100);
-  const remainingAmount = property.totalPrice - downPaymentAmount;
-  const monthlyAmount = data.installmentMonths > 0 
-    ? remainingAmount / data.installmentMonths 
-    : 0;
+export function PaymentTerms({ data, totalPriceIDR, currencySymbol, formatAmount, onUpdate }: Props) {
+  const downPaymentIDR = totalPriceIDR * (data.downPaymentPercent / 100);
+  const remainingIDR = totalPriceIDR - downPaymentIDR;
+  const monthlyIDR = data.installmentMonths > 0 ? remainingIDR / data.installmentMonths : 0;
 
   // Calculate end date based on installments
   const endDate = new Date();
@@ -96,7 +81,7 @@ export function PaymentTerms({ data, property, onUpdate }: Props) {
               </span>
               <div className="flex items-center gap-2 text-white font-mono text-lg font-semibold">
                 <span className="text-text-secondary font-normal">{currencySymbol}</span>
-                {formatNumber(downPaymentAmount)}
+                {formatAmount(downPaymentIDR)}
               </div>
               <p className="text-xs text-text-secondary mt-2">Due immediately upon signing.</p>
             </div>
@@ -153,7 +138,7 @@ export function PaymentTerms({ data, property, onUpdate }: Props) {
                 </div>
                 
                 <div className="text-right">
-                  <p className="text-sm font-mono text-white">{currencySymbol} {formatNumber(monthlyAmount)}</p>
+                  <p className="text-sm font-mono text-white">{currencySymbol} {formatAmount(monthlyIDR)}</p>
                 </div>
               </div>
             </div>

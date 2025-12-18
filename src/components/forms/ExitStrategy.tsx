@@ -2,35 +2,31 @@ import type { ExitStrategy as ExitStrategyType } from '../../types/investment';
 
 interface Props {
   data: ExitStrategyType;
-  totalPrice: number;
-  currency: 'IDR' | 'USD' | 'AUD' | 'EUR';
+  totalPriceIDR: number;
+  displayExitPrice: string;
+  currencySymbol: string;
+  formatAmount: (idrAmount: number) => string;
   onUpdate: <K extends keyof ExitStrategyType>(key: K, value: ExitStrategyType[K]) => void;
+  onExitPriceChange: (displayAmount: number) => void;
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  IDR: 'Rp',
-  USD: '$',
-  AUD: 'A$',
-  EUR: '€'
-};
-
-export function ExitStrategy({ data, totalPrice, currency, onUpdate }: Props) {
-  const currencySymbol = CURRENCY_SYMBOLS[currency] || 'Rp';
-  
-  const formatNumber = (num: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      maximumFractionDigits: currency === 'IDR' ? 0 : 2,
-    }).format(num);
-  };
+export function ExitStrategy({ 
+  data, 
+  totalPriceIDR, 
+  displayExitPrice,
+  currencySymbol, 
+  formatAmount,
+  onUpdate,
+  onExitPriceChange
+}: Props) {
+  const closingCostIDR = data.projectedSalesPrice * (data.closingCostPercent / 100);
+  const appreciationPercent = totalPriceIDR > 0 
+    ? ((data.projectedSalesPrice - totalPriceIDR) / totalPriceIDR * 100).toFixed(1)
+    : '0';
 
   const parseNumber = (str: string): number => {
     return parseFloat(str.replace(/[^0-9.-]/g, '')) || 0;
   };
-
-  const closingCostAmount = data.projectedSalesPrice * (data.closingCostPercent / 100);
-  const appreciationPercent = totalPrice > 0 
-    ? ((data.projectedSalesPrice - totalPrice) / totalPrice * 100).toFixed(1)
-    : '0';
 
   return (
     <section className="rounded-xl border border-border-dark bg-[#102216] p-6 shadow-sm">
@@ -52,8 +48,8 @@ export function ExitStrategy({ data, totalPrice, currency, onUpdate }: Props) {
             </span>
             <input
               type="text"
-              value={formatNumber(data.projectedSalesPrice)}
-              onChange={(e) => onUpdate('projectedSalesPrice', parseNumber(e.target.value))}
+              value={displayExitPrice}
+              onChange={(e) => onExitPriceChange(parseNumber(e.target.value))}
               className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg placeholder-text-secondary/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
             />
           </div>
@@ -82,7 +78,7 @@ export function ExitStrategy({ data, totalPrice, currency, onUpdate }: Props) {
               </span>
               <input
                 type="text"
-                value={formatNumber(closingCostAmount)}
+                value={formatAmount(closingCostIDR)}
                 readOnly
                 className="w-full rounded-lg bg-surface-dark/50 border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg placeholder-text-secondary/50 cursor-not-allowed"
               />
@@ -94,19 +90,23 @@ export function ExitStrategy({ data, totalPrice, currency, onUpdate }: Props) {
       {/* Quick Appreciation Buttons */}
       <div className="mt-4 flex flex-wrap gap-2">
         <span className="text-xs text-text-secondary mr-2 self-center">Quick set appreciation:</span>
-        {[10, 15, 20, 25, 30].map(percent => (
-          <button
-            key={percent}
-            onClick={() => onUpdate('projectedSalesPrice', totalPrice * (1 + percent / 100))}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              Math.abs((data.projectedSalesPrice / totalPrice - 1) * 100 - percent) < 1
-                ? 'bg-primary text-[#112217]'
-                : 'bg-surface-dark text-text-secondary hover:text-white hover:bg-border-dark'
-            }`}
-          >
-            +{percent}%
-          </button>
-        ))}
+        {[10, 15, 20, 25, 30].map(percent => {
+          const targetPrice = totalPriceIDR * (1 + percent / 100);
+          const isActive = Math.abs((data.projectedSalesPrice / totalPriceIDR - 1) * 100 - percent) < 1;
+          return (
+            <button
+              key={percent}
+              onClick={() => onUpdate('projectedSalesPrice', targetPrice)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                isActive
+                  ? 'bg-primary text-[#112217]'
+                  : 'bg-surface-dark text-text-secondary hover:text-white hover:bg-border-dark'
+              }`}
+            >
+              +{percent}%
+            </button>
+          );
+        })}
       </div>
     </section>
   );

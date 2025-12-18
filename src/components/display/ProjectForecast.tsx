@@ -3,41 +3,14 @@ import type { XIRRResult } from '../../types/investment';
 interface Props {
   result: XIRRResult;
   location: string;
-  currency: 'IDR' | 'USD' | 'AUD' | 'EUR';
+  currency: string;
+  formatAbbreviated: (idrAmount: number) => string;
   onCalculate: () => void;
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  IDR: 'Rp',
-  USD: '$',
-  AUD: 'A$',
-  EUR: '€'
-};
-
-export function ProjectForecast({ result, location, currency, onCalculate }: Props) {
+export function ProjectForecast({ result, location, currency, formatAbbreviated, onCalculate }: Props) {
   const xirrPercent = (result.rate * 100).toFixed(1);
   const isPositive = result.rate >= 0;
-
-  const formatAbbreviated = (amount: number): string => {
-    if (currency === 'IDR') {
-      if (amount >= 1_000_000_000) {
-        return `${(amount / 1_000_000_000).toFixed(2)}B`;
-      }
-      if (amount >= 1_000_000) {
-        return `${(amount / 1_000_000).toFixed(0)}M`;
-      }
-    } else {
-      if (amount >= 1_000_000) {
-        return `${(amount / 1_000_000).toFixed(2)}M`;
-      }
-      if (amount >= 1_000) {
-        return `${(amount / 1_000).toFixed(0)}K`;
-      }
-    }
-    return new Intl.NumberFormat('en-US', {
-      maximumFractionDigits: currency === 'IDR' ? 0 : 2,
-    }).format(amount);
-  };
 
   return (
     <div className="sticky top-28 flex flex-col gap-6">

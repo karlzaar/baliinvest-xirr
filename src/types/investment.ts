@@ -1,7 +1,7 @@
 export interface PropertyDetails {
   projectName: string;
   location: string;
-  totalPrice: number;
+  totalPrice: number;  // Always stored in IDR
   handoverDate: string;
   currency: 'IDR' | 'USD' | 'AUD' | 'EUR';
 }
@@ -13,7 +13,7 @@ export interface PaymentTerms {
 }
 
 export interface ExitStrategy {
-  projectedSalesPrice: number;
+  projectedSalesPrice: number;  // Always stored in IDR
   closingCostPercent: number;
 }
 
@@ -22,7 +22,7 @@ export interface CashFlowEntry {
   date: string;
   description: string;
   type: 'inflow' | 'outflow';
-  amount: number;
+  amount: number;  // Always stored in IDR
 }
 
 export interface InvestmentData {
@@ -34,12 +34,12 @@ export interface InvestmentData {
 
 export interface XIRRResult {
   rate: number;
-  totalInvested: number;
-  netProfit: number;
+  totalInvested: number;  // In IDR
+  netProfit: number;      // In IDR
   holdPeriodMonths: number;
 }
 
 export interface CashFlow {
   date: Date;
-  amount: number;
+  amount: number;  // In IDR
 }

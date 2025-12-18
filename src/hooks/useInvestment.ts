@@ -1,14 +1,14 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { InvestmentData, XIRRResult, CashFlowEntry } from '../types/investment';
 import { calculateInvestmentReturn } from '../utils/xirr';
 import { v4 as uuidv4 } from 'uuid';
-import { useCurrency } from './useCurrency';
 
+// All values stored in IDR internally
 const DEFAULT_INVESTMENT: InvestmentData = {
   property: {
     projectName: 'Villa Matahari Phase 1',
     location: 'Canggu, Bali',
-    totalPrice: 3_500_000_000,
+    totalPrice: 3_500_000_000, // IDR
     handoverDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     currency: 'IDR'
   },
@@ -18,7 +18,7 @@ const DEFAULT_INVESTMENT: InvestmentData = {
     installmentMonths: 5
   },
   exit: {
-    projectedSalesPrice: 4_200_000_000,
+    projectedSalesPrice: 4_200_000_000, // IDR
     closingCostPercent: 2.5
   },
   additionalCashFlows: [
@@ -27,63 +27,110 @@ const DEFAULT_INVESTMENT: InvestmentData = {
       date: new Date().toISOString().split('T')[0],
       description: 'Furniture Package',
       type: 'outflow',
-      amount: 150_000_000
+      amount: 150_000_000 // IDR
     }
   ]
 };
 
+// Exchange rates (IDR as base = 1)
+const EXCHANGE_RATES: Record<string, number> = {
+  IDR: 1,
+  USD: 16000,      // 1 USD = 16,000 IDR
+  AUD: 10300,      // 1 AUD = 10,300 IDR
+  EUR: 17000,      // 1 EUR = 17,000 IDR
+};
+
 export function useInvestment() {
   const [data, setData] = useState<InvestmentData>(DEFAULT_INVESTMENT);
-  const { convert, formatCurrency, loading: ratesLoading, lastUpdated } = useCurrency();
   
-  // Track the previous currency to enable conversion
-  const previousCurrency = useRef(data.property.currency);
-  
+  // Calculate XIRR using IDR values (internal)
   const result: XIRRResult = useMemo(() => {
     return calculateInvestmentReturn(data);
   }, [data]);
+  
+  // Convert IDR to display currency
+  const toDisplayCurrency = useCallback((idrAmount: number): number => {
+    const rate = EXCHANGE_RATES[data.property.currency] || 1;
+    return idrAmount / rate;
+  }, [data.property.currency]);
+  
+  // Convert display currency to IDR for storage
+  const toIDR = useCallback((displayAmount: number): number => {
+    const rate = EXCHANGE_RATES[data.property.currency] || 1;
+    return displayAmount * rate;
+  }, [data.property.currency]);
+  
+  // Get currency symbol
+  const getCurrencySymbol = useCallback((): string => {
+    const symbols: Record<string, string> = {
+      IDR: 'Rp',
+      USD: '$',
+      AUD: 'A$',
+      EUR: '€'
+    };
+    return symbols[data.property.currency] || 'Rp';
+  }, [data.property.currency]);
+  
+  // Format number for display
+  const formatAmount = useCallback((idrAmount: number): string => {
+    const displayAmount = toDisplayCurrency(idrAmount);
+    const decimals = data.property.currency === 'IDR' ? 0 : 2;
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(displayAmount);
+  }, [data.property.currency, toDisplayCurrency]);
+  
+  // Format abbreviated (for sidebar)
+  const formatAbbreviated = useCallback((idrAmount: number): string => {
+    const displayAmount = toDisplayCurrency(idrAmount);
+    const currency = data.property.currency;
+    
+    if (currency === 'IDR') {
+      if (Math.abs(displayAmount) >= 1_000_000_000) {
+        return `${(displayAmount / 1_000_000_000).toFixed(2)}B`;
+      }
+      if (Math.abs(displayAmount) >= 1_000_000) {
+        return `${(displayAmount / 1_000_000).toFixed(0)}M`;
+      }
+    } else {
+      if (Math.abs(displayAmount) >= 1_000_000) {
+        return `${(displayAmount / 1_000_000).toFixed(2)}M`;
+      }
+      if (Math.abs(displayAmount) >= 1_000) {
+        return `${(displayAmount / 1_000).toFixed(0)}K`;
+      }
+    }
+    return formatAmount(idrAmount);
+  }, [data.property.currency, toDisplayCurrency, formatAmount]);
   
   const updateProperty = useCallback(<K extends keyof InvestmentData['property']>(
     key: K,
     value: InvestmentData['property'][K]
   ) => {
-    setData(prev => {
-      // Handle currency change with conversion
-      if (key === 'currency' && value !== prev.property.currency) {
-        const oldCurrency = prev.property.currency;
-        const newCurrency = value as 'IDR' | 'USD' | 'AUD' | 'EUR';
-        
-        // Convert all monetary values
-        const newTotalPrice = convert(prev.property.totalPrice, oldCurrency, newCurrency);
-        const newSalesPrice = convert(prev.exit.projectedSalesPrice, oldCurrency, newCurrency);
-        const newCashFlows = prev.additionalCashFlows.map(cf => ({
-          ...cf,
-          amount: convert(cf.amount, oldCurrency, newCurrency)
-        }));
-        
-        previousCurrency.current = newCurrency;
-        
-        return {
-          ...prev,
-          property: { 
-            ...prev.property, 
-            currency: newCurrency,
-            totalPrice: newTotalPrice 
-          },
-          exit: {
-            ...prev.exit,
-            projectedSalesPrice: newSalesPrice
-          },
-          additionalCashFlows: newCashFlows
-        };
-      }
-      
-      return {
-        ...prev,
-        property: { ...prev.property, [key]: value }
-      };
-    });
-  }, [convert]);
+    setData(prev => ({
+      ...prev,
+      property: { ...prev.property, [key]: value }
+    }));
+  }, []);
+  
+  // Special handler for price updates (converts from display to IDR)
+  const updatePrice = useCallback((displayAmount: number) => {
+    const idrAmount = toIDR(displayAmount);
+    setData(prev => ({
+      ...prev,
+      property: { ...prev.property, totalPrice: idrAmount }
+    }));
+  }, [toIDR]);
+  
+  // Special handler for exit price updates
+  const updateExitPrice = useCallback((displayAmount: number) => {
+    const idrAmount = toIDR(displayAmount);
+    setData(prev => ({
+      ...prev,
+      exit: { ...prev.exit, projectedSalesPrice: idrAmount }
+    }));
+  }, [toIDR]);
   
   const updatePayment = useCallback(<K extends keyof InvestmentData['payment']>(
     key: K,
@@ -106,14 +153,16 @@ export function useInvestment() {
   }, []);
   
   const addCashFlow = useCallback((entry: Omit<CashFlowEntry, 'id'>) => {
+    // Convert display amount to IDR before storing
+    const idrAmount = toIDR(entry.amount);
     setData(prev => ({
       ...prev,
       additionalCashFlows: [
         ...prev.additionalCashFlows,
-        { ...entry, id: uuidv4() }
+        { ...entry, amount: idrAmount, id: uuidv4() }
       ]
     }));
-  }, []);
+  }, [toIDR]);
   
   const removeCashFlow = useCallback((id: string) => {
     setData(prev => ({
@@ -131,24 +180,44 @@ export function useInvestment() {
     }));
   }, []);
   
+  // Update cash flow amount (converts from display to IDR)
+  const updateCashFlowAmount = useCallback((id: string, displayAmount: number) => {
+    const idrAmount = toIDR(displayAmount);
+    setData(prev => ({
+      ...prev,
+      additionalCashFlows: prev.additionalCashFlows.map(cf =>
+        cf.id === id ? { ...cf, amount: idrAmount } : cf
+      )
+    }));
+  }, [toIDR]);
+  
   const reset = useCallback(() => {
     setData(DEFAULT_INVESTMENT);
-    previousCurrency.current = 'IDR';
   }, []);
   
   return {
     data,
     result,
+    // Property updates
     updateProperty,
+    updatePrice,
+    updateExitPrice,
+    // Other updates
     updatePayment,
     updateExit,
+    // Cash flow management
     addCashFlow,
     removeCashFlow,
     updateCashFlow,
+    updateCashFlowAmount,
+    // Reset
     reset,
     // Currency utilities
-    formatCurrency,
-    ratesLoading,
-    lastUpdated
+    toDisplayCurrency,
+    toIDR,
+    getCurrencySymbol,
+    formatAmount,
+    formatAbbreviated,
+    exchangeRate: EXCHANGE_RATES[data.property.currency] || 1
   };
 }
