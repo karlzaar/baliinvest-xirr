@@ -9,24 +9,25 @@ interface Props {
 }
 
 export function PaymentTerms({ data, totalPriceIDR, symbol, formatDisplay, onUpdate }: Props) {
-  const downPaymentIDR = totalPriceIDR * (data.downPaymentPercent / 100);
+  // Fixed 50% down payment - company policy
+  const DOWN_PAYMENT_PERCENT = 50;
+  const downPaymentIDR = totalPriceIDR * (DOWN_PAYMENT_PERCENT / 100);
   const remainingIDR = totalPriceIDR - downPaymentIDR;
   const monthlyIDR = data.installmentMonths > 0 ? remainingIDR / data.installmentMonths : 0;
+  const monthlyPercent = (100 - DOWN_PAYMENT_PERCENT) / data.installmentMonths;
 
   const endDate = new Date();
   endDate.setMonth(endDate.getMonth() + data.installmentMonths);
   const endDateStr = endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
   return (
-    <section className="rounded-xl border border-border-dark bg-[#102216] p-6 shadow-sm relative">
-      <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
-      
+    <section className="rounded-xl border border-border-dark bg-[#102216] p-6 shadow-sm">
       <div className="mb-6 flex items-center gap-2 border-b border-border-dark pb-4">
         <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
         <h2 className="text-xl font-bold text-white">Payment Terms</h2>
       </div>
 
-      {/* Payment Type */}
+      {/* Payment Type Selection */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         <label className="cursor-pointer">
           <input
@@ -36,9 +37,14 @@ export function PaymentTerms({ data, totalPriceIDR, symbol, formatDisplay, onUpd
             onChange={() => onUpdate('type', 'full')}
             className="sr-only peer"
           />
-          <div className="p-4 rounded-lg border border-border-dark bg-surface-dark peer-checked:border-primary peer-checked:bg-primary/10 transition-all">
-            <div className="font-bold text-white text-sm">Full Payment</div>
-            <div className="text-xs text-text-secondary mt-0.5">100% upon signing</div>
+          <div className="p-4 rounded-lg border border-border-dark bg-surface-dark peer-checked:border-primary peer-checked:bg-primary/10 transition-all flex items-center gap-3">
+            <div className="w-5 h-5 rounded-full border-2 border-text-secondary peer-checked:border-primary flex items-center justify-center">
+              {data.type === 'full' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+            </div>
+            <div>
+              <div className="font-bold text-white">Full Payment</div>
+              <div className="text-sm text-text-secondary">100% upon signing</div>
+            </div>
           </div>
         </label>
 
@@ -50,76 +56,101 @@ export function PaymentTerms({ data, totalPriceIDR, symbol, formatDisplay, onUpd
             onChange={() => onUpdate('type', 'plan')}
             className="sr-only peer"
           />
-          <div className="p-4 rounded-lg border border-border-dark bg-surface-dark peer-checked:border-primary peer-checked:bg-primary/10 transition-all">
-            <div className="font-bold text-white text-sm">Payment Plan</div>
-            <div className="text-xs text-text-secondary mt-0.5">Split payments</div>
+          <div className="p-4 rounded-lg border border-border-dark bg-surface-dark peer-checked:border-primary peer-checked:bg-primary/10 transition-all flex items-center gap-3">
+            <div className="w-5 h-5 rounded-full border-2 border-text-secondary peer-checked:border-primary flex items-center justify-center">
+              {data.type === 'plan' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+            </div>
+            <div>
+              <div className="font-bold text-white">Payment Plan</div>
+              <div className="text-sm text-text-secondary">Split payments until handover</div>
+            </div>
           </div>
         </label>
       </div>
 
       {/* Payment Plan Details */}
       {data.type === 'plan' && (
-        <div className="space-y-6">
-          {/* Down Payment */}
-          <div className="p-4 rounded-lg bg-surface-dark/30 border border-border-dark/50">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-text-secondary">
-                Down Payment ({data.downPaymentPercent}%)
-              </span>
-              <span className="font-mono text-white">
-                {symbol} {formatDisplay(downPaymentIDR)}
-              </span>
+        <div className="space-y-8">
+          {/* Down Payment Section */}
+          <div>
+            <div className="text-sm text-text-secondary mb-2">
+              Down Payment ({DOWN_PAYMENT_PERCENT}%)
             </div>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="10"
-                max="90"
-                step="5"
-                value={data.downPaymentPercent}
-                onChange={(e) => onUpdate('downPaymentPercent', parseInt(e.target.value))}
-                className="flex-1 h-2 bg-surface-dark rounded-full appearance-none cursor-pointer accent-primary"
-              />
-              <span className="text-sm font-bold text-primary w-12 text-right">
-                {data.downPaymentPercent}%
-              </span>
-            </div>
-            <p className="text-xs text-text-secondary mt-2">Due immediately upon signing</p>
-          </div>
-
-          {/* Installments */}
-          <div className="rounded-lg border border-border-dark bg-surface-dark overflow-hidden">
-            <div className="grid grid-cols-3 text-xs font-semibold text-text-secondary uppercase bg-[#112217] py-2 px-4 border-b border-border-dark">
-              <div>Schedule</div>
-              <div className="text-center">Breakdown</div>
-              <div className="text-right">Per Month</div>
+            <div className="text-3xl font-mono text-white mb-1">
+              {symbol} {formatDisplay(downPaymentIDR)}
             </div>
             
-            <div className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white">Monthly until {endDateStr}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <input
-                    type="number"
-                    min="1"
-                    max="24"
-                    value={data.installmentMonths}
-                    onChange={(e) => onUpdate('installmentMonths', parseInt(e.target.value) || 1)}
-                    className="w-16 rounded bg-surface-dark border border-border-dark px-2 py-1 text-white text-xs focus:border-primary"
-                  />
-                  <span className="text-xs text-text-secondary">installments</span>
-                </div>
+            {/* Progress Bar */}
+            <div className="flex items-center gap-4 mt-4 mb-2">
+              <div className="flex-1 h-3 bg-surface-dark rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary rounded-full"
+                  style={{ width: `${DOWN_PAYMENT_PERCENT}%` }}
+                />
+              </div>
+              <span className="text-primary font-bold">{DOWN_PAYMENT_PERCENT}%</span>
+            </div>
+            
+            <p className="text-sm text-text-secondary">Due immediately upon signing.</p>
+          </div>
+
+          {/* Remaining Payment Schedule */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-primary text-lg">event_note</span>
+              <h3 className="font-bold text-white">Remaining Payment Schedule</h3>
+            </div>
+            
+            <div className="rounded-lg border border-border-dark bg-surface-dark overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-3 text-xs font-semibold text-text-secondary uppercase bg-[#0d1a12] py-3 px-4 border-b border-border-dark">
+                <div>SCHEDULE</div>
+                <div className="text-center">BREAKDOWN</div>
+                <div className="text-right">AMOUNT / MONTH</div>
               </div>
               
-              <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                {((100 - data.downPaymentPercent) / data.installmentMonths).toFixed(1)}% / mo
-              </span>
-              
-              <span className="font-mono text-white text-sm">
-                {symbol} {formatDisplay(monthlyIDR)}
-              </span>
+              {/* Table Row */}
+              <div className="p-4 grid grid-cols-3 items-center">
+                <div>
+                  <div className="text-white font-medium">Monthly until {endDateStr}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={data.installmentMonths}
+                      onChange={(e) => onUpdate('installmentMonths', parseInt(e.target.value) || 1)}
+                      className="w-12 rounded bg-[#0d1a12] border border-border-dark px-2 py-1 text-white text-sm text-center focus:border-primary focus:outline-none"
+                    />
+                    <span className="text-sm text-text-secondary">Installments</span>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <span className="text-sm text-primary bg-primary/10 px-3 py-1 rounded-full">
+                    {monthlyPercent.toFixed(0)}% per month
+                  </span>
+                </div>
+                
+                <div className="text-right">
+                  <span className="font-mono text-white text-lg">
+                    {symbol} {formatDisplay(monthlyIDR)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Full Payment Details */}
+      {data.type === 'full' && (
+        <div className="p-4 rounded-lg bg-surface-dark/30 border border-border-dark/50">
+          <div className="text-sm text-text-secondary mb-2">Total Due Upon Signing</div>
+          <div className="text-3xl font-mono text-white">
+            {symbol} {formatDisplay(totalPriceIDR)}
+          </div>
+          <p className="text-sm text-text-secondary mt-2">Full payment required at contract signing.</p>
         </div>
       )}
     </section>
