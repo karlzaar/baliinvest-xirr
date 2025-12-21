@@ -105,15 +105,42 @@ export function useInvestment() {
     }
   }, [currency, idrToDisplay]);
   
+  // Helper to calculate months until a date
+  const getMonthsUntil = (dateStr: string): number => {
+    if (!dateStr) return 6; // default
+    const target = new Date(dateStr);
+    const now = new Date();
+    const months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+    return Math.max(1, months); // minimum 1 month
+  };
+
   // Update handlers
   const updateProperty = useCallback(<K extends keyof InvestmentData['property']>(
     key: K,
     value: InvestmentData['property'][K]
   ) => {
-    setData(prev => ({
-      ...prev,
-      property: { ...prev.property, [key]: value }
-    }));
+    setData(prev => {
+      const newProperty = { ...prev.property, [key]: value };
+
+      // When handover date changes, update installment months to match
+      if (key === 'handoverDate' && typeof value === 'string' && value) {
+        const monthsUntilHandover = getMonthsUntil(value);
+        return {
+          ...prev,
+          property: newProperty,
+          payment: {
+            ...prev.payment,
+            installmentMonths: monthsUntilHandover,
+            schedule: [] // Clear schedule so it regenerates with new month count
+          }
+        };
+      }
+
+      return {
+        ...prev,
+        property: newProperty
+      };
+    });
   }, []);
   
   const updatePriceFromDisplay = useCallback((displayValue: number) => {
