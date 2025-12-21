@@ -96,46 +96,77 @@ export function PaymentTerms({ data, totalPriceIDR, symbol, formatDisplay, onUpd
 
           {/* Remaining Payment Schedule */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="material-symbols-outlined text-primary text-lg">event_note</span>
-              <h3 className="font-bold text-white">Remaining Payment Schedule</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-lg">event_note</span>
+                <h3 className="font-bold text-white">Remaining Payment Schedule</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="24"
+                  value={data.installmentMonths}
+                  onChange={(e) => onUpdate('installmentMonths', parseInt(e.target.value) || 1)}
+                  className="w-14 rounded bg-surface-dark border border-border-dark px-2 py-1.5 text-white text-sm text-center focus:border-primary focus:outline-none"
+                />
+                <span className="text-sm text-text-secondary">months</span>
+              </div>
             </div>
-            
+
             <div className="rounded-lg border border-border-dark bg-surface-dark overflow-hidden">
               {/* Table Header */}
-              <div className="grid grid-cols-3 text-xs font-semibold text-text-secondary uppercase bg-[#0d1a12] py-3 px-4 border-b border-border-dark">
-                <div>SCHEDULE</div>
-                <div className="text-center">BREAKDOWN</div>
-                <div className="text-right">AMOUNT / MONTH</div>
+              <div className="grid grid-cols-12 text-xs font-semibold text-text-secondary uppercase bg-[#0d1a12] py-3 px-4 border-b border-border-dark">
+                <div className="col-span-1">#</div>
+                <div className="col-span-5">Due Date</div>
+                <div className="col-span-3 text-center">Percentage</div>
+                <div className="col-span-3 text-right">Amount</div>
               </div>
-              
-              {/* Table Row */}
-              <div className="p-4 grid grid-cols-3 items-center">
-                <div>
-                  <div className="text-white font-medium">Monthly until {endDateStr}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="number"
-                      min="1"
-                      max="24"
-                      value={data.installmentMonths}
-                      onChange={(e) => onUpdate('installmentMonths', parseInt(e.target.value) || 1)}
-                      className="w-12 rounded bg-[#0d1a12] border border-border-dark px-2 py-1 text-white text-sm text-center focus:border-primary focus:outline-none"
-                    />
-                    <span className="text-sm text-text-secondary">Installments</span>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <span className="text-sm text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {monthlyPercent.toFixed(0)}% per month
+
+              {/* Payment Rows */}
+              <div className="max-h-64 overflow-y-auto">
+                {Array.from({ length: data.installmentMonths }, (_, i) => {
+                  const paymentDate = new Date();
+                  paymentDate.setMonth(paymentDate.getMonth() + i + 1);
+                  const dateStr = paymentDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  });
+
+                  return (
+                    <div
+                      key={i}
+                      className={`grid grid-cols-12 items-center py-3 px-4 ${
+                        i < data.installmentMonths - 1 ? 'border-b border-border-dark/50' : ''
+                      }`}
+                    >
+                      <div className="col-span-1 text-text-secondary text-sm">{i + 1}</div>
+                      <div className="col-span-5 text-white text-sm">{dateStr}</div>
+                      <div className="col-span-3 text-center">
+                        <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          {monthlyPercent.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="col-span-3 text-right font-mono text-white text-sm">
+                        {symbol} {formatDisplay(monthlyIDR)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total Row */}
+              <div className="grid grid-cols-12 items-center py-3 px-4 bg-[#0d1a12] border-t border-border-dark">
+                <div className="col-span-1"></div>
+                <div className="col-span-5 text-text-secondary font-medium text-sm">Total Remaining</div>
+                <div className="col-span-3 text-center">
+                  <span className="text-xs text-text-secondary">
+                    {100 - DOWN_PAYMENT_PERCENT}%
                   </span>
                 </div>
-                
-                <div className="text-right">
-                  <span className="font-mono text-white text-lg">
-                    {symbol} {formatDisplay(monthlyIDR)}
-                  </span>
+                <div className="col-span-3 text-right font-mono text-primary font-bold">
+                  {symbol} {formatDisplay(remainingIDR)}
                 </div>
               </div>
             </div>
