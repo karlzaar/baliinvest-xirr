@@ -46,7 +46,8 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
             type="text"
             value={data.projectName}
             onChange={(e) => onUpdate('projectName', e.target.value)}
-            className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 text-white focus:border-primary focus:outline-none"
+            placeholder="e.g., Villa Matahari Phase 1"
+            className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 text-white placeholder:text-text-secondary/50 focus:border-primary focus:outline-none"
           />
         </label>
 
@@ -62,7 +63,8 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
               list="locations"
               value={data.location}
               onChange={(e) => onUpdate('location', e.target.value)}
-              className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-10 text-white focus:border-primary focus:outline-none"
+              placeholder="e.g., Canggu, Bali"
+              className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-10 text-white placeholder:text-text-secondary/50 focus:border-primary focus:outline-none"
             />
             <datalist id="locations">
               {LOCATIONS.map(loc => <option key={loc} value={loc} />)}
@@ -79,9 +81,10 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
             </span>
             <input
               type="text"
-              value={formatNumber(displayPrice)}
+              value={displayPrice > 0 ? formatNumber(displayPrice) : ''}
               onChange={(e) => onPriceChange(parseInput(e.target.value))}
-              className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg focus:border-primary focus:outline-none"
+              placeholder="3,500,000,000"
+              className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg placeholder:text-text-secondary/50 focus:border-primary focus:outline-none"
             />
           </div>
         </label>

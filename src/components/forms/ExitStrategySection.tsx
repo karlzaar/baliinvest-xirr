@@ -82,7 +82,7 @@ export function ExitStrategySection({
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium text-text-secondary">Projected Sales Price</span>
           <span className="text-xs text-text-secondary/70">
-            Appreciation: +{appreciation.toFixed(1)}%
+            {totalPriceIDR > 0 ? `Appreciation: +${appreciation.toFixed(1)}%` : 'Set purchase price first'}
           </span>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-mono">
@@ -90,9 +90,10 @@ export function ExitStrategySection({
             </span>
             <input
               type="text"
-              value={formatNumber(displayExitPrice)}
+              value={displayExitPrice > 0 ? formatNumber(displayExitPrice) : ''}
               onChange={(e) => onExitPriceChange(parseInput(e.target.value))}
-              className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg focus:border-primary focus:outline-none"
+              placeholder="4,375,000,000"
+              className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 pl-12 text-white font-mono text-lg placeholder:text-text-secondary/50 focus:border-primary focus:outline-none"
             />
           </div>
         </label>
@@ -102,6 +103,7 @@ export function ExitStrategySection({
           <span className="text-sm font-medium text-text-secondary">Sale Date</span>
           <span className="text-xs text-text-secondary/70">
             {(() => {
+              if (!data.saleDate || !handoverDate) return 'Select dates above';
               const sale = new Date(data.saleDate);
               const handover = new Date(handoverDate);
               const diffYears = ((sale.getTime() - handover.getTime()) / (365.25 * 24 * 60 * 60 * 1000)).toFixed(1);

@@ -4,26 +4,27 @@ import { calculateInvestmentReturn } from '../utils/xirr';
 import { useExchangeRates } from './useExchangeRates';
 import { v4 as uuidv4 } from 'uuid';
 
-// All values stored in IDR internally - NEVER changes
+// All values stored in IDR internally
+// Empty defaults - users fill in their own data with placeholder guidance
 const DEFAULT_INVESTMENT: InvestmentData = {
   property: {
-    projectName: 'Villa Matahari Phase 1',
-    location: 'Canggu, Bali',
-    totalPrice: 3500000000, // 3.5 billion IDR
-    handoverDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    projectName: '',
+    location: '',
+    totalPrice: 0,
+    handoverDate: '',
     currency: 'IDR'
   },
   payment: {
     type: 'plan',
     downPaymentPercent: 50,
-    installmentMonths: 5
+    installmentMonths: 6
   },
   exit: {
     strategyType: 'rent-resell',
-    projectedSalesPrice: 4375000000, // 3.5B * 1.25 = 25% appreciation
+    projectedSalesPrice: 0,
     closingCostPercent: 2.5,
     holdPeriodYears: 6,
-    saleDate: new Date(Date.now() + (6 * 365 + 365) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // handover + 6 years
+    saleDate: ''
   },
   additionalCashFlows: []
 };
