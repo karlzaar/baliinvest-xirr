@@ -141,11 +141,13 @@ export function PaymentTerms({
               </div>
             </div>
 
-            {/* Auto-generate if no schedule and price is set */}
+            {/* Auto-generate schedule when price is set but no schedule exists */}
             {!hasSchedule && totalPriceIDR > 0 && (
-              <div className="text-center py-6 text-text-secondary">
-                <p className="text-sm">Set the number of months above to generate schedule</p>
-              </div>
+              (() => {
+                // Trigger schedule generation
+                setTimeout(() => onRegenerateSchedule(), 0);
+                return null;
+              })()
             )}
 
             {hasSchedule && (
@@ -153,8 +155,14 @@ export function PaymentTerms({
                 {/* Table Header */}
                 <div className="grid grid-cols-12 text-xs font-semibold text-text-secondary uppercase bg-[#0d1a12] py-3 px-4 border-b border-border-dark">
                   <div className="col-span-1">#</div>
-                  <div className="col-span-5">Due Date</div>
-                  <div className="col-span-6 text-right">Amount</div>
+                  <div className="col-span-5 flex items-center gap-1">
+                    Due Date
+                    <span className="material-symbols-outlined text-xs opacity-50">edit</span>
+                  </div>
+                  <div className="col-span-6 text-right flex items-center justify-end gap-1">
+                    Amount
+                    <span className="material-symbols-outlined text-xs opacity-50">edit</span>
+                  </div>
                 </div>
 
                 {/* Payment Rows */}
@@ -184,7 +192,7 @@ export function PaymentTerms({
                               type="date"
                               value={entry.date}
                               onChange={(e) => onUpdateScheduleEntry(entry.id, { date: e.target.value })}
-                              className="w-full bg-transparent text-white text-sm focus:outline-none focus:bg-surface-dark/50 rounded px-1 py-1 cursor-pointer"
+                              className="w-full bg-transparent text-white text-sm rounded px-2 py-1 cursor-pointer hover:bg-white/5 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary/50 transition-colors"
                             />
                           </div>
                           <div className="col-span-6 flex items-center justify-end gap-1">
@@ -197,7 +205,7 @@ export function PaymentTerms({
                                 const idrValue = displayToIdr(displayValue);
                                 onUpdateScheduleEntry(entry.id, { amount: idrValue });
                               }}
-                              className="w-32 bg-transparent text-white font-mono text-sm text-right focus:outline-none focus:bg-surface-dark/50 rounded px-2 py-1"
+                              className="w-32 bg-transparent text-white font-mono text-sm text-right rounded px-2 py-1 hover:bg-white/5 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary/50 transition-colors"
                             />
                           </div>
                         </div>
