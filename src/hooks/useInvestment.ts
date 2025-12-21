@@ -115,6 +115,31 @@ export function useInvestment() {
     return Math.max(1, months); // minimum 1 month
   };
 
+  // Helper to generate schedule inline
+  const createSchedule = (
+    totalPrice: number,
+    downPaymentPercent: number,
+    installmentMonths: number
+  ): PaymentScheduleEntry[] => {
+    if (totalPrice <= 0 || installmentMonths <= 0) return [];
+    const remaining = totalPrice * (1 - downPaymentPercent / 100);
+    const basePayment = Math.floor(remaining / installmentMonths);
+
+    return Array.from({ length: installmentMonths }, (_, i) => {
+      const paymentDate = new Date();
+      paymentDate.setMonth(paymentDate.getMonth() + i + 1);
+      const isLast = i === installmentMonths - 1;
+      const previousTotal = basePayment * i;
+      const amount = isLast ? remaining - previousTotal : basePayment;
+
+      return {
+        id: uuidv4(),
+        date: paymentDate.toISOString().split('T')[0],
+        amount
+      };
+    });
+  };
+
   // Update handlers
   const updateProperty = useCallback(<K extends keyof InvestmentData['property']>(
     key: K,
@@ -123,16 +148,21 @@ export function useInvestment() {
     setData(prev => {
       const newProperty = { ...prev.property, [key]: value };
 
-      // When handover date changes, update installment months to match
+      // When handover date changes, update installment months and regenerate schedule
       if (key === 'handoverDate' && typeof value === 'string' && value) {
         const monthsUntilHandover = getMonthsUntil(value);
+        const newSchedule = createSchedule(
+          prev.property.totalPrice,
+          prev.payment.downPaymentPercent,
+          monthsUntilHandover
+        );
         return {
           ...prev,
           property: newProperty,
           payment: {
             ...prev.payment,
             installmentMonths: monthsUntilHandover,
-            schedule: [] // Clear schedule so it regenerates with new month count
+            schedule: newSchedule
           }
         };
       }
@@ -143,13 +173,28 @@ export function useInvestment() {
       };
     });
   }, []);
-  
+
   const updatePriceFromDisplay = useCallback((displayValue: number) => {
     const idr = displayToIdr(displayValue);
-    setData(prev => ({
-      ...prev,
-      property: { ...prev.property, totalPrice: idr }
-    }));
+    setData(prev => {
+      // Auto-generate schedule if handover date is set
+      if (prev.property.handoverDate && idr > 0) {
+        const newSchedule = createSchedule(
+          idr,
+          prev.payment.downPaymentPercent,
+          prev.payment.installmentMonths
+        );
+        return {
+          ...prev,
+          property: { ...prev.property, totalPrice: idr },
+          payment: { ...prev.payment, schedule: newSchedule }
+        };
+      }
+      return {
+        ...prev,
+        property: { ...prev.property, totalPrice: idr }
+      };
+    });
   }, [displayToIdr]);
   
   const updateExitPriceFromDisplay = useCallback((displayValue: number) => {
