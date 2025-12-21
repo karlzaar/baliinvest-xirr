@@ -309,23 +309,17 @@ export function generatePDFReport(options: PDFExportOptions): void {
 
     // Helper to convert IDR to display currency
     const idrToDisplayNum = (idr: number): number => Math.round(idr / rate);
-    const remainingDisplay = idrToDisplayNum(remaining);
+    let totalForDisplay = idrToDisplayNum(remaining);
 
     if (hasSchedule) {
-      // Use stored schedule data with actual manually-edited amounts
-      // Apply rounding adjustment only to last payment to ensure display total matches
-      const displayAmounts = scheduleEntries.map(entry => idrToDisplayNum(entry.amount));
-      const sumExceptLast = displayAmounts.slice(0, -1).reduce((sum, amt) => sum + amt, 0);
-      const lastDisplayAmount = remainingDisplay - sumExceptLast;
-
-      // Track actual total from schedule for display
+      // Use ACTUAL stored schedule data - NO recalculation
+      // This preserves all manual edits to dates and amounts
       let actualDisplayTotal = 0;
 
       for (let i = 0; i < scheduleEntries.length; i++) {
         const entry = scheduleEntries[i];
-        const isLast = i === scheduleEntries.length - 1;
-        // Use actual stored amount, with rounding adjustment only for last payment
-        const displayAmount = isLast ? lastDisplayAmount : displayAmounts[i];
+        // Use the ACTUAL stored amount converted to display currency
+        const displayAmount = idrToDisplayNum(entry.amount);
         actualDisplayTotal += displayAmount;
 
         // Use the EXACT date from the schedule (preserves manual edits)
@@ -355,10 +349,13 @@ export function generatePDFReport(options: PDFExportOptions): void {
 
         rowY += rowHeight;
       }
+
+      // Use actual sum for the total row (preserves manual edits)
+      totalForDisplay = actualDisplayTotal;
     } else {
       // Calculate payments (fallback for legacy data)
       // Use display currency for calculations to avoid rounding issues
-      const baseDisplayPayment = Math.floor(remainingDisplay / data.payment.installmentMonths);
+      const baseDisplayPayment = Math.floor(totalForDisplay / data.payment.installmentMonths);
 
       for (let i = 0; i < data.payment.installmentMonths; i++) {
         const paymentDate = new Date();
@@ -373,7 +370,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
         const isLastPayment = i === data.payment.installmentMonths - 1;
         const previousTotal = baseDisplayPayment * i;
         const displayAmount = isLastPayment
-          ? remainingDisplay - previousTotal
+          ? totalForDisplay - previousTotal
           : baseDisplayPayment;
 
         // Alternate row background
@@ -407,7 +404,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL SCHEDULED', margin + 20, rowY + 5.5);
     doc.setTextColor(...COLORS.primary);
-    doc.text(`${symbol}${remainingDisplay.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+    doc.text(`${symbol}${totalForDisplay.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
 
     yPos += scheduleCardHeight + 6;
   } else {
