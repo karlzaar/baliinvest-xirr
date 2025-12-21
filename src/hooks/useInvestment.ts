@@ -169,18 +169,23 @@ export function useInvestment() {
   }, []);
 
   // Regenerate schedule (called when user changes months or wants to reset)
-  const regenerateSchedule = useCallback(() => {
-    setData(prev => ({
-      ...prev,
-      payment: {
-        ...prev.payment,
-        schedule: generateSchedule(
-          prev.property.totalPrice,
-          prev.payment.downPaymentPercent,
-          prev.payment.installmentMonths
-        )
-      }
-    }));
+  // Optionally accepts new months value for atomic update
+  const regenerateSchedule = useCallback((newMonths?: number) => {
+    setData(prev => {
+      const months = newMonths ?? prev.payment.installmentMonths;
+      return {
+        ...prev,
+        payment: {
+          ...prev.payment,
+          installmentMonths: months,
+          schedule: generateSchedule(
+            prev.property.totalPrice,
+            prev.payment.downPaymentPercent,
+            months
+          )
+        }
+      };
+    });
   }, [generateSchedule]);
 
   // Update individual schedule entry

@@ -8,7 +8,7 @@ interface Props {
   displayToIdr: (display: number) => number;
   idrToDisplay: (idr: number) => number;
   onUpdate: <K extends keyof PaymentTermsType>(key: K, value: PaymentTermsType[K]) => void;
-  onRegenerateSchedule: () => void;
+  onRegenerateSchedule: (newMonths?: number) => void;
   onUpdateScheduleEntry: (id: string, updates: Partial<Pick<PaymentScheduleEntry, 'date' | 'amount'>>) => void;
 }
 
@@ -132,9 +132,8 @@ export function PaymentTerms({
                   value={data.installmentMonths}
                   onChange={(e) => {
                     const newMonths = parseInt(e.target.value) || 1;
-                    onUpdate('installmentMonths', newMonths);
-                    // Auto-regenerate schedule with new month count
-                    setTimeout(() => onRegenerateSchedule(), 0);
+                    // Atomic update: set months and regenerate schedule in one go
+                    onRegenerateSchedule(newMonths);
                   }}
                   className="w-14 rounded bg-surface-dark border border-border-dark px-2 py-1.5 text-white text-sm text-center focus:border-primary focus:outline-none"
                 />
@@ -204,7 +203,7 @@ export function PaymentTerms({
                     <span className="text-text-secondary font-medium text-sm">Total Scheduled</span>
                     {Math.abs(scheduleTotal - remainingIDR) >= 1 && (
                       <button
-                        onClick={onRegenerateSchedule}
+                        onClick={() => onRegenerateSchedule()}
                         className="text-xs text-amber-400 hover:text-amber-300 underline"
                       >
                         Distribute evenly
