@@ -26,9 +26,9 @@ export const EXIT_STRATEGIES: ExitStrategyOption[] = [
     description: 'Buy during pre-construction and sell immediately upon handover. Capitalizes on the price appreciation gap.',
     roi: '35-50%',
     roiLabel: 'Proj. ROI',
-    duration: '12-18 Mo',
+    duration: '3-6 Mo',
     durationLabel: 'Duration',
-    defaultHoldYears: 1.5,
+    defaultHoldYears: 0.5,
     defaultAppreciation: 40,
     features: [
       { icon: 'trending_up', text: 'Quick capital recycling' },
