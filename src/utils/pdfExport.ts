@@ -384,10 +384,30 @@ export function generatePDFReport(options: PDFExportOptions): void {
     // Build payment data array
     const payments: { dateStr: string; amount: number }[] = [];
 
+    // Calculate total in IDR first, then convert once (avoids rounding errors)
+    const totalIDR = hasSchedule
+      ? scheduleEntries.reduce((sum, entry) => sum + entry.amount, 0)
+      : remaining;
+    totalForDisplay = idrToDisplayNum(totalIDR);
+
     if (hasSchedule) {
-      for (const entry of scheduleEntries) {
-        const displayAmount = idrToDisplayNum(entry.amount);
-        totalForDisplay += displayAmount;
+      // Pre-calculate display amounts so they sum correctly to the total
+      // Last payment gets adjusted to absorb rounding differences
+      let runningSum = 0;
+
+      for (let i = 0; i < scheduleEntries.length; i++) {
+        const entry = scheduleEntries[i];
+        const isLast = i === scheduleEntries.length - 1;
+
+        // Last payment = total minus sum of previous displayed amounts
+        const displayAmount = isLast
+          ? totalForDisplay - runningSum
+          : idrToDisplayNum(entry.amount);
+
+        if (!isLast) {
+          runningSum += displayAmount;
+        }
+
         payments.push({
           dateStr: new Date(entry.date).toLocaleDateString('en-US', {
             month: 'short',
@@ -399,7 +419,6 @@ export function generatePDFReport(options: PDFExportOptions): void {
       }
     } else {
       // Fallback for legacy data
-      totalForDisplay = idrToDisplayNum(remaining);
       const baseDisplayPayment = Math.floor(totalForDisplay / data.payment.installmentMonths);
 
       for (let i = 0; i < data.payment.installmentMonths; i++) {
