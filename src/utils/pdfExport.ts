@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import type { InvestmentData, XIRRResult } from '../types/investment';
-import { EXIT_STRATEGIES } from '../types/exitStrategies';
 
 interface PDFExportOptions {
   data: InvestmentData;
@@ -22,16 +21,8 @@ const COLORS = {
   textPrimary: [255, 255, 255] as [number, number, number],
   textSecondary: [146, 201, 164] as [number, number, number],
   cyan: [34, 211, 238] as [number, number, number],
-  purple: [167, 139, 250] as [number, number, number],
-  amber: [251, 191, 36] as [number, number, number],
   red: [248, 113, 113] as [number, number, number],
   green: [74, 222, 128] as [number, number, number],
-};
-
-const STRATEGY_COLORS = {
-  'flip': COLORS.cyan,
-  'rent-resell': COLORS.purple,
-  'milk-cow': COLORS.amber,
 };
 
 // Helper to truncate text to fit width
@@ -100,7 +91,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(truncateText(doc, data.property.projectName, contentWidth), margin, yPos);
+  doc.text(truncateText(doc, data.property.projectName || 'Untitled Project', contentWidth), margin, yPos);
   yPos += 8;
 
   // XIRR Result Card
@@ -193,14 +184,14 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.text('Project', propLabelX, propValueY1);
   doc.setTextColor(...COLORS.textPrimary);
   doc.setFontSize(8);
-  doc.text(truncateText(doc, data.property.projectName, propMaxWidth), propLabelX, propValueY1 + 5);
+  doc.text(truncateText(doc, data.property.projectName || 'Not specified', propMaxWidth), propLabelX, propValueY1 + 5);
 
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.text('Location', propLabelX, propValueY2);
   doc.setTextColor(...COLORS.textPrimary);
   doc.setFontSize(8);
-  doc.text(truncateText(doc, data.property.location, propMaxWidth), propLabelX, propValueY2 + 5);
+  doc.text(truncateText(doc, data.property.location || 'Not specified', propMaxWidth), propLabelX, propValueY2 + 5);
 
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
@@ -217,162 +208,176 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.text('Handover', propLabelX + propMaxWidth / 2 + 10, propValueY3);
   doc.setTextColor(...COLORS.textPrimary);
   doc.setFontSize(8);
-  doc.text(new Date(data.property.handoverDate).toLocaleDateString(), propLabelX + propMaxWidth / 2 + 10, propValueY3 + 5);
+  const handoverDateStr = data.property.handoverDate
+    ? new Date(data.property.handoverDate).toLocaleDateString()
+    : 'Not set';
+  doc.text(handoverDateStr, propLabelX + propMaxWidth / 2 + 10, propValueY3 + 5);
 
-  // Payment Terms Card
+  // Exit Strategy Card (simplified - only Flip at Completion)
   doc.setFillColor(...COLORS.surface);
   doc.roundedRect(rightColX, yPos, colWidth, propCardHeight, 2, 2, 'F');
   doc.setDrawColor(...COLORS.border);
   doc.roundedRect(rightColX, yPos, colWidth, propCardHeight, 2, 2, 'S');
 
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(9);
+  // Flip at Completion badge
+  doc.setFillColor(COLORS.cyan[0] * 0.3, COLORS.cyan[1] * 0.3, COLORS.cyan[2] * 0.3);
+  doc.setFontSize(7);
+  const badgeText = 'Flip at Completion';
+  const badgeWidth = doc.getTextWidth(badgeText) + 6;
+  doc.roundedRect(rightColX + 6, yPos + 5, badgeWidth, 8, 1.5, 1.5, 'F');
+  doc.setTextColor(...COLORS.cyan);
   doc.setFont('helvetica', 'bold');
-  doc.text('Payment Terms', rightColX + 6, yPos + 10);
+  doc.text(badgeText, rightColX + 9, yPos + 10.5);
 
-  const downPayment = data.property.totalPrice * (data.payment.downPaymentPercent / 100);
-  const remaining = data.property.totalPrice - downPayment;
+  const appreciation = data.property.totalPrice > 0
+    ? ((data.exit.projectedSalesPrice - data.property.totalPrice) / data.property.totalPrice) * 100
+    : 0;
+  const closingCosts = data.exit.projectedSalesPrice * (data.exit.closingCostPercent / 100);
 
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
+  doc.text('Sale Price', rightColX + 6, propValueY1 + 2);
+  doc.setTextColor(...COLORS.textPrimary);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${symbol}${formatDisplay(data.exit.projectedSalesPrice)}`, rightColX + 6, propValueY1 + 7);
 
-  if (data.payment.type === 'full') {
-    doc.text('Payment Type', rightColX + 6, propValueY1);
-    doc.setTextColor(...COLORS.textPrimary);
-    doc.setFontSize(8);
-    doc.text('Full Payment (100%)', rightColX + 6, propValueY1 + 5);
-  } else {
-    doc.text('Down Payment', rightColX + 6, propValueY1);
-    doc.setTextColor(...COLORS.textPrimary);
-    doc.setFontSize(8);
-    doc.text(`${data.payment.downPaymentPercent}% (${symbol}${formatDisplay(downPayment)})`, rightColX + 6, propValueY1 + 5);
+  doc.setTextColor(...COLORS.textSecondary);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Appreciation', rightColX + colWidth / 2, propValueY1 + 2);
+  doc.setTextColor(...(appreciation >= 0 ? COLORS.green : COLORS.red));
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${appreciation >= 0 ? '+' : ''}${appreciation.toFixed(1)}%`, rightColX + colWidth / 2, propValueY1 + 7);
 
-    doc.setTextColor(...COLORS.textSecondary);
-    doc.setFontSize(7);
-    doc.text('Installments', rightColX + 6, propValueY2);
-    doc.setTextColor(...COLORS.textPrimary);
-    doc.setFontSize(8);
-    const monthlyPayment = remaining / data.payment.installmentMonths;
-    doc.text(`${data.payment.installmentMonths}x ${symbol}${formatDisplay(monthlyPayment)}`, rightColX + 6, propValueY2 + 5);
-  }
-
-  if (currency !== 'IDR') {
-    doc.setTextColor(...COLORS.textSecondary);
-    doc.setFontSize(6);
-    doc.text(`Exchange: 1 ${currency} = ${rate.toLocaleString()} IDR`, rightColX + 6, propValueY3 + 5);
-  }
+  doc.setTextColor(...COLORS.textSecondary);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Closing Costs (${data.exit.closingCostPercent}%)`, rightColX + 6, propValueY2 + 2);
+  doc.setTextColor(...COLORS.textPrimary);
+  doc.setFontSize(8);
+  doc.text(`${symbol}${formatDisplay(closingCosts)}`, rightColX + 6, propValueY2 + 7);
 
   yPos += propCardHeight + 6;
 
-  // Exit Strategy Card
-  const strategy = EXIT_STRATEGIES.find(s => s.id === data.exit.strategyType);
-  const strategyColor = STRATEGY_COLORS[data.exit.strategyType] || COLORS.primary;
-  const exitCardHeight = 42;
-
-  doc.setFillColor(...COLORS.surface);
-  doc.roundedRect(margin, yPos, contentWidth, exitCardHeight, 2, 2, 'F');
-  doc.setDrawColor(...COLORS.border);
-  doc.roundedRect(margin, yPos, contentWidth, exitCardHeight, 2, 2, 'S');
-
-  // Strategy badge
-  doc.setFillColor(strategyColor[0] * 0.3, strategyColor[1] * 0.3, strategyColor[2] * 0.3);
-  doc.setFontSize(7);
-  const badgeText = strategy?.name || 'Exit Strategy';
-  const badgeWidth = doc.getTextWidth(badgeText) + 6;
-  doc.roundedRect(margin + 6, yPos + 5, badgeWidth, 8, 1.5, 1.5, 'F');
-  doc.setTextColor(...strategyColor);
-  doc.setFont('helvetica', 'bold');
-  doc.text(badgeText, margin + 9, yPos + 10.5);
-
-  // Exit details - 4 columns
-  const appreciation = ((data.exit.projectedSalesPrice - data.property.totalPrice) / data.property.totalPrice) * 100;
-  const closingCosts = data.exit.projectedSalesPrice * (data.exit.closingCostPercent / 100);
-
-  const exitColWidth = contentWidth / 4;
-  const exitRow1Y = yPos + 22;
-  const exitRow2Y = yPos + 30;
-
-  // Sale Price
-  doc.setTextColor(...COLORS.textSecondary);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Sale Price', margin + 6, exitRow1Y);
-  doc.setTextColor(...COLORS.textPrimary);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${symbol}${formatDisplay(data.exit.projectedSalesPrice)}`, margin + 6, exitRow2Y);
-
-  // Appreciation
-  doc.setTextColor(...COLORS.textSecondary);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Appreciation', margin + exitColWidth, exitRow1Y);
-  doc.setTextColor(...(appreciation >= 0 ? COLORS.green : COLORS.red));
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${appreciation >= 0 ? '+' : ''}${appreciation.toFixed(1)}%`, margin + exitColWidth, exitRow2Y);
-
-  // Sale Date
-  doc.setTextColor(...COLORS.textSecondary);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Sale Date', margin + exitColWidth * 2, exitRow1Y);
-  doc.setTextColor(...COLORS.textPrimary);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(new Date(data.exit.saleDate).toLocaleDateString(), margin + exitColWidth * 2, exitRow2Y);
-
-  // Closing Costs
-  doc.setTextColor(...COLORS.textSecondary);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Closing (${data.exit.closingCostPercent}%)`, margin + exitColWidth * 3, exitRow1Y);
-  doc.setTextColor(...COLORS.textPrimary);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${symbol}${formatDisplay(closingCosts)}`, margin + exitColWidth * 3, exitRow2Y);
-
-  yPos += exitCardHeight + 6;
-
-  // Additional Cash Flows
-  if (data.additionalCashFlows.length > 0) {
-    const cfRowHeight = 10;
-    const cfHeaderHeight = 16;
-    const cfCardHeight = cfHeaderHeight + data.additionalCashFlows.length * cfRowHeight + 4;
+  // Payment Schedule Card (with individual rows)
+  if (data.payment.type === 'plan') {
+    const downPayment = data.property.totalPrice * (data.payment.downPaymentPercent / 100);
+    const remaining = data.property.totalPrice - downPayment;
+    const monthlyPayment = remaining / data.payment.installmentMonths;
+    const rowHeight = 8;
+    const headerHeight = 20;
+    const scheduleCardHeight = headerHeight + (data.payment.installmentMonths + 2) * rowHeight + 6;
 
     doc.setFillColor(...COLORS.surface);
-    doc.roundedRect(margin, yPos, contentWidth, cfCardHeight, 2, 2, 'F');
+    doc.roundedRect(margin, yPos, contentWidth, scheduleCardHeight, 2, 2, 'F');
     doc.setDrawColor(...COLORS.border);
-    doc.roundedRect(margin, yPos, contentWidth, cfCardHeight, 2, 2, 'S');
+    doc.roundedRect(margin, yPos, contentWidth, scheduleCardHeight, 2, 2, 'S');
 
     doc.setTextColor(...COLORS.primary);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('Additional Cash Flows', margin + 6, yPos + 10);
+    doc.text('Payment Schedule', margin + 6, yPos + 10);
 
-    let cfY = yPos + cfHeaderHeight + 4;
-    data.additionalCashFlows.forEach(cf => {
-      const isInflow = cf.type === 'inflow';
+    // Down payment info
+    doc.setTextColor(...COLORS.textSecondary);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Down Payment: ${data.payment.downPaymentPercent}% (${symbol}${formatDisplay(downPayment)})`, margin + 6, yPos + 17);
+
+    // Table header
+    const tableY = yPos + headerHeight;
+    doc.setFillColor(...COLORS.surfaceDark);
+    doc.rect(margin + 4, tableY, contentWidth - 8, rowHeight, 'F');
+
+    doc.setTextColor(...COLORS.textSecondary);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'bold');
+    doc.text('#', margin + 8, tableY + 5.5);
+    doc.text('DUE DATE', margin + 20, tableY + 5.5);
+    doc.text('PERCENTAGE', margin + 70, tableY + 5.5);
+    doc.text('AMOUNT', pageWidth - margin - 8, tableY + 5.5, { align: 'right' });
+
+    // Payment rows
+    let rowY = tableY + rowHeight;
+    const monthlyPercent = (100 - data.payment.downPaymentPercent) / data.payment.installmentMonths;
+
+    for (let i = 0; i < data.payment.installmentMonths; i++) {
+      const paymentDate = new Date();
+      paymentDate.setMonth(paymentDate.getMonth() + i + 1);
+      const dateStr = paymentDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      // Alternate row background
+      if (i % 2 === 0) {
+        doc.setFillColor(COLORS.surfaceDark[0] * 0.5, COLORS.surfaceDark[1] * 0.5, COLORS.surfaceDark[2] * 0.5);
+        doc.rect(margin + 4, rowY, contentWidth - 8, rowHeight, 'F');
+      }
 
       doc.setTextColor(...COLORS.textSecondary);
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
-      doc.text(new Date(cf.date).toLocaleDateString(), margin + 6, cfY);
+      doc.text(`${i + 1}`, margin + 8, rowY + 5.5);
 
       doc.setTextColor(...COLORS.textPrimary);
-      doc.setFontSize(8);
-      doc.text(truncateText(doc, cf.description, 80), margin + 35, cfY);
+      doc.text(dateStr, margin + 20, rowY + 5.5);
 
-      doc.setTextColor(...(isInflow ? COLORS.green : COLORS.red));
+      doc.setTextColor(...COLORS.cyan);
+      doc.text(`${monthlyPercent.toFixed(1)}%`, margin + 70, rowY + 5.5);
+
+      doc.setTextColor(...COLORS.textPrimary);
       doc.setFont('helvetica', 'bold');
-      const sign = isInflow ? '+' : '-';
-      doc.text(`${sign}${symbol}${formatDisplay(cf.amount)}`, pageWidth - margin - 6, cfY, { align: 'right' });
+      doc.text(`${symbol}${formatDisplay(monthlyPayment)}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
 
-      cfY += cfRowHeight;
-    });
+      rowY += rowHeight;
+    }
 
-    yPos += cfCardHeight + 6;
+    // Total row
+    doc.setFillColor(...COLORS.surfaceDark);
+    doc.rect(margin + 4, rowY, contentWidth - 8, rowHeight, 'F');
+
+    doc.setTextColor(...COLORS.textSecondary);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL REMAINING', margin + 20, rowY + 5.5);
+    doc.text(`${100 - data.payment.downPaymentPercent}%`, margin + 70, rowY + 5.5);
+    doc.setTextColor(...COLORS.primary);
+    doc.text(`${symbol}${formatDisplay(remaining)}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+
+    yPos += scheduleCardHeight + 6;
+  } else {
+    // Full payment - simple display
+    const fullPayCardHeight = 24;
+    doc.setFillColor(...COLORS.surface);
+    doc.roundedRect(margin, yPos, contentWidth, fullPayCardHeight, 2, 2, 'F');
+    doc.setDrawColor(...COLORS.border);
+    doc.roundedRect(margin, yPos, contentWidth, fullPayCardHeight, 2, 2, 'S');
+
+    doc.setTextColor(...COLORS.primary);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Payment', margin + 6, yPos + 10);
+
+    doc.setTextColor(...COLORS.textPrimary);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Full Payment: ${symbol}${formatDisplay(data.property.totalPrice)}`, margin + 6, yPos + 18);
+
+    yPos += fullPayCardHeight + 6;
+  }
+
+  // Exchange rate note if not IDR
+  if (currency !== 'IDR') {
+    doc.setTextColor(...COLORS.textSecondary);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Exchange Rate: 1 ${currency} = ${rate.toLocaleString()} IDR`, margin, yPos);
+    yPos += 8;
   }
 
   // Footer
@@ -386,6 +391,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.text('XIRR uses irregular cash flow intervals for accurate annualized returns', pageWidth - margin, pageHeight - 8, { align: 'right' });
 
   // Save
-  const fileName = `BaliInvest_${data.property.projectName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  const projectName = data.property.projectName || 'Investment';
+  const fileName = `BaliInvest_${projectName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 }
