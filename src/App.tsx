@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useInvestment } from './hooks/useInvestment';
 import {
   Header,
@@ -38,6 +38,27 @@ function App() {
     reset,
   } = useInvestment();
 
+  // Use refs to always have access to the latest data for PDF export
+  // This prevents stale closure issues with useCallback
+  const dataRef = useRef(data);
+  const resultRef = useRef(result);
+  const currencyRef = useRef(currency);
+  const symbolRef = useRef(symbol);
+  const rateRef = useRef(rate);
+  const formatDisplayRef = useRef(formatDisplay);
+  const formatAbbrevRef = useRef(formatAbbrev);
+
+  // Keep refs up to date
+  useEffect(() => {
+    dataRef.current = data;
+    resultRef.current = result;
+    currencyRef.current = currency;
+    symbolRef.current = symbol;
+    rateRef.current = rate;
+    formatDisplayRef.current = formatDisplay;
+    formatAbbrevRef.current = formatAbbrev;
+  }, [data, result, currency, symbol, rate, formatDisplay, formatAbbrev]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -72,23 +93,26 @@ function App() {
     }
   }, [reset, showClearConfirm]);
 
+  // Use refs to always get the LATEST data when exporting PDF
+  // This fixes the stale closure issue where edits weren't showing
   const handleExportPDF = useCallback(() => {
     try {
+      // Read from refs to get the absolute latest data
       generatePDFReport({
-        data,
-        result,
-        currency,
-        symbol,
-        formatDisplay,
-        formatAbbrev,
-        rate,
+        data: dataRef.current,
+        result: resultRef.current,
+        currency: currencyRef.current,
+        symbol: symbolRef.current,
+        formatDisplay: formatDisplayRef.current,
+        formatAbbrev: formatAbbrevRef.current,
+        rate: rateRef.current,
       });
       setToast({ message: 'PDF exported successfully!', type: 'success' });
     } catch (error) {
       console.error('PDF export error:', error);
       setToast({ message: 'Failed to export PDF', type: 'error' });
     }
-  }, [data, result, currency, symbol, formatDisplay, formatAbbrev, rate]);
+  }, []); // No dependencies - refs always have latest values
 
   const displayPrice = idrToDisplay(data.property.totalPrice);
   const displayExitPrice = idrToDisplay(data.exit.projectedSalesPrice);
