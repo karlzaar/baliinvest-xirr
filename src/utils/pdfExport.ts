@@ -306,19 +306,27 @@ export function generatePDFReport(options: PDFExportOptions): void {
 
     // Payment rows
     let rowY = tableY + rowHeight;
-    let scheduleTotal = 0;
+
+    // Helper to convert IDR to display currency
+    const idrToDisplayNum = (idr: number): number => Math.round(idr / rate);
+    const remainingDisplay = idrToDisplayNum(remaining);
 
     if (hasSchedule) {
+      // Calculate display amounts with last payment adjustment for exact total
+      const displayAmounts = scheduleEntries.map(entry => idrToDisplayNum(entry.amount));
+      const sumExceptLast = displayAmounts.slice(0, -1).reduce((sum, amt) => sum + amt, 0);
+      const lastDisplayAmount = remainingDisplay - sumExceptLast;
+
       // Use stored schedule data
       for (let i = 0; i < scheduleEntries.length; i++) {
         const entry = scheduleEntries[i];
+        const isLast = i === scheduleEntries.length - 1;
+        const displayAmount = isLast ? lastDisplayAmount : displayAmounts[i];
         const dateStr = new Date(entry.date).toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
         });
-
-        scheduleTotal += entry.amount;
 
         // Alternate row background
         if (i % 2 === 0) {
@@ -336,14 +344,14 @@ export function generatePDFReport(options: PDFExportOptions): void {
 
         doc.setTextColor(...COLORS.textPrimary);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${symbol}${formatDisplay(entry.amount)}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+        doc.text(`${symbol}${displayAmount.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
 
         rowY += rowHeight;
       }
     } else {
       // Calculate payments (fallback for legacy data)
-      const monthlyPayment = remaining / data.payment.installmentMonths;
-      const baseMonthlyPayment = Math.floor(monthlyPayment);
+      // Use display currency for calculations to avoid rounding issues
+      const baseDisplayPayment = Math.floor(remainingDisplay / data.payment.installmentMonths);
 
       for (let i = 0; i < data.payment.installmentMonths; i++) {
         const paymentDate = new Date();
@@ -354,13 +362,12 @@ export function generatePDFReport(options: PDFExportOptions): void {
           year: 'numeric',
         });
 
+        // Last payment gets remainder to ensure exact total
         const isLastPayment = i === data.payment.installmentMonths - 1;
-        const previousPaymentsTotal = baseMonthlyPayment * i;
-        const thisPaymentAmount = isLastPayment
-          ? remaining - previousPaymentsTotal
-          : baseMonthlyPayment;
-
-        scheduleTotal += thisPaymentAmount;
+        const previousTotal = baseDisplayPayment * i;
+        const displayAmount = isLastPayment
+          ? remainingDisplay - previousTotal
+          : baseDisplayPayment;
 
         // Alternate row background
         if (i % 2 === 0) {
@@ -378,7 +385,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
 
         doc.setTextColor(...COLORS.textPrimary);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${symbol}${formatDisplay(thisPaymentAmount)}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+        doc.text(`${symbol}${displayAmount.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
 
         rowY += rowHeight;
       }
@@ -393,7 +400,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL SCHEDULED', margin + 20, rowY + 5.5);
     doc.setTextColor(...COLORS.primary);
-    doc.text(`${symbol}${formatDisplay(scheduleTotal)}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+    doc.text(`${symbol}${remainingDisplay.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
 
     yPos += scheduleCardHeight + 6;
   } else {

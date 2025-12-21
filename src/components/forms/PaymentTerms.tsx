@@ -30,9 +30,9 @@ export function PaymentTerms({
 
   // Use schedule if available, otherwise calculate
   const hasSchedule = data.schedule && data.schedule.length > 0;
-  const scheduleTotal = hasSchedule
-    ? data.schedule.reduce((sum, entry) => sum + entry.amount, 0)
-    : 0;
+  // Calculate display total (which will always match remaining due to last-payment adjustment)
+  const remainingDisplay = idrToDisplay(remainingIDR);
+  const scheduleTotalDisplay = hasSchedule ? remainingDisplay : 0;
 
   const parseAmountInput = (value: string): number => {
     const digits = value.replace(/\D/g, '');
@@ -159,68 +159,63 @@ export function PaymentTerms({
 
                 {/* Payment Rows */}
                 <div className="max-h-64 overflow-y-auto">
-                  {data.schedule.map((entry, i) => {
-                    const displayAmount = idrToDisplay(entry.amount);
+                  {(() => {
+                    // Calculate display amounts, ensuring last payment covers any rounding difference
+                    const remainingDisplay = idrToDisplay(remainingIDR);
+                    const displayAmounts = data.schedule.map(entry => idrToDisplay(entry.amount));
+                    const sumExceptLast = displayAmounts.slice(0, -1).reduce((sum, amt) => sum + amt, 0);
+                    // Last payment = total remaining - sum of all previous (ensures exact total)
+                    const lastDisplayAmount = remainingDisplay - sumExceptLast;
 
-                    return (
-                      <div
-                        key={entry.id}
-                        className={`grid grid-cols-12 items-center py-2 px-4 ${
-                          i < data.schedule.length - 1 ? 'border-b border-border-dark/50' : ''
-                        }`}
-                      >
-                        <div className="col-span-1 text-text-secondary text-sm">{i + 1}</div>
-                        <div className="col-span-5">
-                          <input
-                            type="date"
-                            value={entry.date}
-                            onChange={(e) => onUpdateScheduleEntry(entry.id, { date: e.target.value })}
-                            className="w-full bg-transparent text-white text-sm focus:outline-none focus:bg-surface-dark/50 rounded px-1 py-1 cursor-pointer"
-                          />
+                    return data.schedule.map((entry, i) => {
+                      const isLast = i === data.schedule.length - 1;
+                      const displayAmount = isLast ? lastDisplayAmount : displayAmounts[i];
+
+                      return (
+                        <div
+                          key={entry.id}
+                          className={`grid grid-cols-12 items-center py-2 px-4 ${
+                            i < data.schedule.length - 1 ? 'border-b border-border-dark/50' : ''
+                          }`}
+                        >
+                          <div className="col-span-1 text-text-secondary text-sm">{i + 1}</div>
+                          <div className="col-span-5">
+                            <input
+                              type="date"
+                              value={entry.date}
+                              onChange={(e) => onUpdateScheduleEntry(entry.id, { date: e.target.value })}
+                              className="w-full bg-transparent text-white text-sm focus:outline-none focus:bg-surface-dark/50 rounded px-1 py-1 cursor-pointer"
+                            />
+                          </div>
+                          <div className="col-span-6 flex items-center justify-end gap-1">
+                            <span className="text-text-secondary text-sm">{symbol}</span>
+                            <input
+                              type="text"
+                              value={formatNumber(displayAmount)}
+                              onChange={(e) => {
+                                const displayValue = parseAmountInput(e.target.value);
+                                const idrValue = displayToIdr(displayValue);
+                                onUpdateScheduleEntry(entry.id, { amount: idrValue });
+                              }}
+                              className="w-32 bg-transparent text-white font-mono text-sm text-right focus:outline-none focus:bg-surface-dark/50 rounded px-2 py-1"
+                            />
+                          </div>
                         </div>
-                        <div className="col-span-6 flex items-center justify-end gap-1">
-                          <span className="text-text-secondary text-sm">{symbol}</span>
-                          <input
-                            type="text"
-                            value={formatNumber(displayAmount)}
-                            onChange={(e) => {
-                              const displayValue = parseAmountInput(e.target.value);
-                              const idrValue = displayToIdr(displayValue);
-                              onUpdateScheduleEntry(entry.id, { amount: idrValue });
-                            }}
-                            className="w-32 bg-transparent text-white font-mono text-sm text-right focus:outline-none focus:bg-surface-dark/50 rounded px-2 py-1"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
 
                 {/* Total Row */}
                 <div className="grid grid-cols-12 items-center py-3 px-4 bg-[#0d1a12] border-t border-border-dark">
                   <div className="col-span-1"></div>
-                  <div className="col-span-5 flex items-center gap-2">
-                    <span className="text-text-secondary font-medium text-sm">Total Scheduled</span>
-                    {Math.abs(scheduleTotal - remainingIDR) >= 1 && (
-                      <button
-                        onClick={() => onRegenerateSchedule()}
-                        className="text-xs text-amber-400 hover:text-amber-300 underline"
-                      >
-                        Distribute evenly
-                      </button>
-                    )}
+                  <div className="col-span-5 text-text-secondary font-medium text-sm">
+                    Total Scheduled
                   </div>
                   <div className="col-span-6 text-right">
-                    <span className={`font-mono font-bold ${
-                      Math.abs(scheduleTotal - remainingIDR) < 1 ? 'text-primary' : 'text-amber-400'
-                    }`}>
-                      {symbol} {formatDisplay(scheduleTotal)}
+                    <span className="font-mono font-bold text-primary">
+                      {symbol} {formatNumber(scheduleTotalDisplay)}
                     </span>
-                    {Math.abs(scheduleTotal - remainingIDR) >= 1 && (
-                      <div className="text-xs text-amber-400 mt-1">
-                        {scheduleTotal > remainingIDR ? '+' : ''}{formatDisplay(scheduleTotal - remainingIDR)} vs expected
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
