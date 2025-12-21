@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import type { PaymentTerms as PaymentTermsType, PaymentScheduleEntry } from '../../types/investment';
 
 interface Props {
@@ -34,20 +33,6 @@ export function PaymentTerms({
   // Calculate display total (which will always match remaining due to last-payment adjustment)
   const remainingDisplay = idrToDisplay(remainingIDR);
   const scheduleTotalDisplay = hasSchedule ? remainingDisplay : 0;
-
-  // Auto-generate schedule when price is set but no schedule exists
-  // Using a ref to prevent re-triggering
-  const hasTriggeredRef = useRef(false);
-  useEffect(() => {
-    if (!hasSchedule && totalPriceIDR > 0 && !hasTriggeredRef.current) {
-      hasTriggeredRef.current = true;
-      onRegenerateSchedule();
-    }
-    // Reset when schedule is cleared
-    if (hasSchedule) {
-      hasTriggeredRef.current = false;
-    }
-  }, [hasSchedule, totalPriceIDR, onRegenerateSchedule]);
 
   const parseAmountInput = (value: string): number => {
     const digits = value.replace(/\D/g, '');
@@ -155,6 +140,12 @@ export function PaymentTerms({
                 <span className="text-sm text-text-secondary">months</span>
               </div>
             </div>
+
+            {!hasSchedule && totalPriceIDR > 0 && (
+              <div className="text-center py-6 text-text-secondary border border-dashed border-border-dark rounded-lg">
+                <p className="text-sm">Change the number of months to generate schedule</p>
+              </div>
+            )}
 
             {hasSchedule && (
               <div className="rounded-lg border border-border-dark bg-surface-dark overflow-hidden">
