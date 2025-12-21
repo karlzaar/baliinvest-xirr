@@ -5,7 +5,6 @@ import {
   PropertyDetails,
   PaymentTerms,
   ExitStrategySection,
-  CashFlows,
   ProjectForecast,
 } from './components';
 import { Toast } from './components/ui/Toast';
@@ -34,9 +33,6 @@ function App() {
     updatePayment,
     updateExit,
     updateExitStrategy,
-    addCashFlow,
-    removeCashFlow,
-    updateCashFlow,
     reset,
   } = useInvestment();
 
@@ -163,15 +159,6 @@ function App() {
                 onUpdate={updateExit}
                 onExitPriceChange={updateExitPriceFromDisplay}
                 onStrategyChange={updateExitStrategy}
-              />
-
-              <CashFlows
-                entries={data.additionalCashFlows}
-                symbol={symbol}
-                formatDisplay={formatDisplay}
-                onAdd={addCashFlow}
-                onRemove={removeCashFlow}
-                onUpdate={updateCashFlow}
               />
             </div>
 
