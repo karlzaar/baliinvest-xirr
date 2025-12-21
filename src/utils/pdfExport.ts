@@ -344,19 +344,14 @@ export function generatePDFReport(options: PDFExportOptions): void {
     let totalForDisplay = idrToDisplayNum(remaining);
 
     if (hasSchedule) {
-      // Match the UI exactly - use same rounding adjustment for last payment
-      // This ensures PDF shows exactly what the dashboard shows
-      const remainingDisplay = idrToDisplayNum(remaining);
-      const displayAmounts = scheduleEntries.map(entry => idrToDisplayNum(entry.amount));
-      const sumExceptLast = displayAmounts.slice(0, -1).reduce((sum, amt) => sum + amt, 0);
-      // Last payment adjusted to ensure total matches exactly (same as UI)
-      const lastDisplayAmount = remainingDisplay - sumExceptLast;
+      // Show ACTUAL stored values - matches UI exactly and preserves manual edits
+      let actualTotal = 0;
 
       for (let i = 0; i < scheduleEntries.length; i++) {
         const entry = scheduleEntries[i];
-        const isLast = i === scheduleEntries.length - 1;
-        // Use adjusted last payment to match UI display exactly
-        const displayAmount = isLast ? lastDisplayAmount : displayAmounts[i];
+        // Use ACTUAL stored amount - no recalculation, preserves edits
+        const displayAmount = idrToDisplayNum(entry.amount);
+        actualTotal += displayAmount;
 
         // Use the EXACT date from the schedule (preserves manual edits)
         const dateStr = new Date(entry.date).toLocaleDateString('en-US', {
@@ -386,8 +381,8 @@ export function generatePDFReport(options: PDFExportOptions): void {
         rowY += rowHeight;
       }
 
-      // Total matches the remaining display amount (same as UI)
-      totalForDisplay = remainingDisplay;
+      // Total is actual sum of displayed amounts (matches UI)
+      totalForDisplay = actualTotal;
     } else {
       // Calculate payments (fallback for legacy data)
       // Use display currency for calculations to avoid rounding issues

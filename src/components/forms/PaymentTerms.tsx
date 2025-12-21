@@ -26,13 +26,13 @@ export function PaymentTerms({
   // Fixed 50% down payment - company policy
   const DOWN_PAYMENT_PERCENT = 50;
   const downPaymentIDR = totalPriceIDR * (DOWN_PAYMENT_PERCENT / 100);
-  const remainingIDR = totalPriceIDR - downPaymentIDR;
 
   // Use schedule if available, otherwise calculate
   const hasSchedule = data.schedule && data.schedule.length > 0;
-  // Calculate display total (which will always match remaining due to last-payment adjustment)
-  const remainingDisplay = idrToDisplay(remainingIDR);
-  const scheduleTotalDisplay = hasSchedule ? remainingDisplay : 0;
+  // Calculate actual total from stored schedule amounts (preserves manual edits)
+  const scheduleTotalDisplay = hasSchedule
+    ? data.schedule.reduce((sum, entry) => sum + idrToDisplay(entry.amount), 0)
+    : 0;
 
   const parseAmountInput = (value: string): number => {
     const digits = value.replace(/\D/g, '');
@@ -164,51 +164,42 @@ export function PaymentTerms({
 
                 {/* Payment Rows */}
                 <div className="max-h-64 overflow-y-auto">
-                  {(() => {
-                    // Calculate display amounts, ensuring last payment covers any rounding difference
-                    const remainingDisplay = idrToDisplay(remainingIDR);
-                    const displayAmounts = data.schedule.map(entry => idrToDisplay(entry.amount));
-                    const sumExceptLast = displayAmounts.slice(0, -1).reduce((sum, amt) => sum + amt, 0);
-                    // Last payment = total remaining - sum of all previous (ensures exact total)
-                    const lastDisplayAmount = remainingDisplay - sumExceptLast;
+                  {data.schedule.map((entry, i) => {
+                    // Show ACTUAL stored amount - preserves manual edits
+                    const displayAmount = idrToDisplay(entry.amount);
 
-                    return data.schedule.map((entry, i) => {
-                      const isLast = i === data.schedule.length - 1;
-                      const displayAmount = isLast ? lastDisplayAmount : displayAmounts[i];
-
-                      return (
-                        <div
-                          key={entry.id}
-                          className={`grid grid-cols-12 items-center py-2 px-4 ${
-                            i < data.schedule.length - 1 ? 'border-b border-border-dark/50' : ''
-                          }`}
-                        >
-                          <div className="col-span-1 text-text-secondary text-sm">{i + 1}</div>
-                          <div className="col-span-5">
-                            <input
-                              type="date"
-                              value={entry.date}
-                              onChange={(e) => onUpdateScheduleEntry(entry.id, { date: e.target.value })}
-                              className="w-full bg-transparent text-white text-sm rounded px-2 py-1 cursor-pointer hover:bg-white/5 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary/50 transition-colors"
-                            />
-                          </div>
-                          <div className="col-span-6 flex items-center justify-end gap-1">
-                            <span className="text-text-secondary text-sm">{symbol}</span>
-                            <input
-                              type="text"
-                              value={formatNumber(displayAmount)}
-                              onChange={(e) => {
-                                const displayValue = parseAmountInput(e.target.value);
-                                const idrValue = displayToIdr(displayValue);
-                                onUpdateScheduleEntry(entry.id, { amount: idrValue });
-                              }}
-                              className="w-32 bg-transparent text-white font-mono text-sm text-right rounded px-2 py-1 hover:bg-white/5 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary/50 transition-colors"
-                            />
-                          </div>
+                    return (
+                      <div
+                        key={entry.id}
+                        className={`grid grid-cols-12 items-center py-2 px-4 ${
+                          i < data.schedule.length - 1 ? 'border-b border-border-dark/50' : ''
+                        }`}
+                      >
+                        <div className="col-span-1 text-text-secondary text-sm">{i + 1}</div>
+                        <div className="col-span-5">
+                          <input
+                            type="date"
+                            value={entry.date}
+                            onChange={(e) => onUpdateScheduleEntry(entry.id, { date: e.target.value })}
+                            className="w-full bg-transparent text-white text-sm rounded px-2 py-1 cursor-pointer hover:bg-white/5 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary/50 transition-colors"
+                          />
                         </div>
-                      );
-                    });
-                  })()}
+                        <div className="col-span-6 flex items-center justify-end gap-1">
+                          <span className="text-text-secondary text-sm">{symbol}</span>
+                          <input
+                            type="text"
+                            value={formatNumber(displayAmount)}
+                            onChange={(e) => {
+                              const displayValue = parseAmountInput(e.target.value);
+                              const idrValue = displayToIdr(displayValue);
+                              onUpdateScheduleEntry(entry.id, { amount: idrValue });
+                            }}
+                            className="w-32 bg-transparent text-white font-mono text-sm text-right rounded px-2 py-1 hover:bg-white/5 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary/50 transition-colors"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Total Row */}
