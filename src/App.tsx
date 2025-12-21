@@ -32,7 +32,6 @@ function App() {
     updateExitPriceFromDisplay,
     updatePayment,
     updateExit,
-    updateExitStrategy,
     reset,
   } = useInvestment();
 
@@ -158,7 +157,6 @@ function App() {
                 formatDisplay={formatDisplay}
                 onUpdate={updateExit}
                 onExitPriceChange={updateExitPriceFromDisplay}
-                onStrategyChange={updateExitStrategy}
               />
             </div>
 

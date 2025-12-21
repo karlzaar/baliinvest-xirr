@@ -20,10 +20,10 @@ const DEFAULT_INVESTMENT: InvestmentData = {
     installmentMonths: 6
   },
   exit: {
-    strategyType: 'rent-resell',
+    strategyType: 'flip',
     projectedSalesPrice: 0,
     closingCostPercent: 2.5,
-    holdPeriodYears: 6,
+    holdPeriodYears: 0,
     saleDate: ''
   },
   additionalCashFlows: []

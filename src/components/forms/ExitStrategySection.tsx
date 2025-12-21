@@ -1,6 +1,4 @@
-import type { ExitStrategy as ExitStrategyData, ExitStrategyType } from '../../types/investment';
-import { EXIT_STRATEGIES } from '../../types/exitStrategies';
-import { StrategyCardCompact } from '../exitStrategies/StrategyCardCompact';
+import type { ExitStrategy as ExitStrategyData } from '../../types/investment';
 
 interface Props {
   data: ExitStrategyData;
@@ -11,7 +9,6 @@ interface Props {
   formatDisplay: (idr: number) => string;
   onUpdate: <K extends keyof ExitStrategyData>(key: K, value: ExitStrategyData[K]) => void;
   onExitPriceChange: (displayValue: number) => void;
-  onStrategyChange: (strategyId: ExitStrategyType, defaults: { appreciation: number; holdYears: number }) => void;
 }
 
 export function ExitStrategySection({
@@ -23,7 +20,6 @@ export function ExitStrategySection({
   formatDisplay,
   onUpdate,
   onExitPriceChange,
-  onStrategyChange,
 }: Props) {
   const closingCostIDR = data.projectedSalesPrice * (data.closingCostPercent / 100);
 
@@ -41,15 +37,14 @@ export function ExitStrategySection({
     return num.toLocaleString('en-US');
   };
 
-  const handleStrategySelect = (strategyId: ExitStrategyType) => {
-    const strategy = EXIT_STRATEGIES.find((s) => s.id === strategyId);
-    if (strategy) {
-      onStrategyChange(strategyId, {
-        appreciation: strategy.defaultAppreciation,
-        holdYears: strategy.defaultHoldYears,
-      });
-    }
-  };
+  // Format handover date for display
+  const formattedHandoverDate = handoverDate
+    ? new Date(handoverDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : 'Set handover date above';
 
   return (
     <section className="rounded-xl border border-border-dark bg-background-dark p-6 shadow-sm">
@@ -57,23 +52,9 @@ export function ExitStrategySection({
       <div className="mb-6 flex items-center gap-2 border-b border-border-dark pb-4">
         <span className="material-symbols-outlined text-primary">flight_takeoff</span>
         <h2 className="text-xl font-bold text-white">Exit Strategy</h2>
-      </div>
-
-      {/* Strategy Selection Cards */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-text-secondary mb-3">
-          Select Your Exit Strategy
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {EXIT_STRATEGIES.map((strategy) => (
-            <StrategyCardCompact
-              key={strategy.id}
-              strategy={strategy}
-              isSelected={data.strategyType === strategy.id}
-              onSelect={handleStrategySelect}
-            />
-          ))}
-        </div>
+        <span className="ml-auto text-sm text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">
+          Flip at Completion
+        </span>
       </div>
 
       {/* Financial Inputs */}
@@ -98,26 +79,14 @@ export function ExitStrategySection({
           </div>
         </label>
 
-        {/* Sale Date */}
-        <label className="flex flex-col gap-2">
+        {/* Sale Date (equals handover for flip) */}
+        <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-text-secondary">Sale Date</span>
-          <span className="text-xs text-text-secondary/70">
-            {(() => {
-              if (!data.saleDate || !handoverDate) return 'Select dates above';
-              const sale = new Date(data.saleDate);
-              const handover = new Date(handoverDate);
-              const diffYears = ((sale.getTime() - handover.getTime()) / (365.25 * 24 * 60 * 60 * 1000)).toFixed(1);
-              return `${diffYears} years after handover`;
-            })()}
-          </span>
-          <input
-            type="date"
-            value={data.saleDate}
-            min={handoverDate}
-            onChange={(e) => onUpdate('saleDate', e.target.value)}
-            className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 text-white font-mono focus:border-primary focus:outline-none"
-          />
-        </label>
+          <span className="text-xs text-text-secondary/70">Sell immediately at handover</span>
+          <div className="w-full rounded-lg bg-surface-dark/50 border border-border-dark px-4 py-3 text-white font-mono">
+            {formattedHandoverDate}
+          </div>
+        </div>
 
         {/* Closing Costs */}
         <label className="flex flex-col gap-2">
