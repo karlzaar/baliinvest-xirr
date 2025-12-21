@@ -304,9 +304,20 @@ export function generatePDFReport(options: PDFExportOptions): void {
     const scheduleEntries = hasSchedule ? data.payment.schedule : [];
     const numRows = hasSchedule ? scheduleEntries.length : data.payment.installmentMonths;
 
-    const rowHeight = 8;
-    const headerHeight = 20;
-    const scheduleCardHeight = headerHeight + (numRows + 2) * rowHeight + 6;
+    // Use smaller row height to fit more entries, and check for page overflow
+    const rowHeight = 5;
+    const headerHeight = 18;
+    const scheduleCardHeight = headerHeight + (numRows + 2) * rowHeight + 4;
+
+    // Check if we need a new page
+    const remainingSpace = pageHeight - yPos - 20; // 20mm for footer
+    if (scheduleCardHeight > remainingSpace) {
+      doc.addPage();
+      // Reset background for new page
+      doc.setFillColor(...COLORS.background);
+      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+      yPos = 15;
+    }
 
     doc.setFillColor(...COLORS.surface);
     doc.roundedRect(margin, yPos, contentWidth, scheduleCardHeight, 2, 2, 'F');
@@ -314,15 +325,15 @@ export function generatePDFReport(options: PDFExportOptions): void {
     doc.roundedRect(margin, yPos, contentWidth, scheduleCardHeight, 2, 2, 'S');
 
     doc.setTextColor(...COLORS.primary);
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Payment Schedule', margin + 6, yPos + 10);
+    doc.text('Payment Schedule', margin + 6, yPos + 8);
 
     // Down payment info
     doc.setTextColor(...COLORS.textSecondary);
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Down Payment: ${data.payment.downPaymentPercent}% (${symbol}${formatDisplay(downPayment)})`, margin + 6, yPos + 17);
+    doc.text(`Down Payment: ${data.payment.downPaymentPercent}% (${symbol}${formatDisplay(downPayment)})`, margin + 6, yPos + 14);
 
     // Table header
     const tableY = yPos + headerHeight;
@@ -330,11 +341,11 @@ export function generatePDFReport(options: PDFExportOptions): void {
     doc.rect(margin + 4, tableY, contentWidth - 8, rowHeight, 'F');
 
     doc.setTextColor(...COLORS.textSecondary);
-    doc.setFontSize(6);
+    doc.setFontSize(5);
     doc.setFont('helvetica', 'bold');
-    doc.text('#', margin + 8, tableY + 5.5);
-    doc.text('DUE DATE', margin + 20, tableY + 5.5);
-    doc.text('AMOUNT', pageWidth - margin - 8, tableY + 5.5, { align: 'right' });
+    doc.text('#', margin + 8, tableY + 3.5);
+    doc.text('DUE DATE', margin + 20, tableY + 3.5);
+    doc.text('AMOUNT', pageWidth - margin - 8, tableY + 3.5, { align: 'right' });
 
     // Payment rows
     let rowY = tableY + rowHeight;
@@ -367,16 +378,16 @@ export function generatePDFReport(options: PDFExportOptions): void {
         }
 
         doc.setTextColor(...COLORS.textSecondary);
-        doc.setFontSize(7);
+        doc.setFontSize(5);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${i + 1}`, margin + 8, rowY + 5.5);
+        doc.text(`${i + 1}`, margin + 8, rowY + 3.5);
 
         doc.setTextColor(...COLORS.textPrimary);
-        doc.text(dateStr, margin + 20, rowY + 5.5);
+        doc.text(dateStr, margin + 20, rowY + 3.5);
 
         doc.setTextColor(...COLORS.textPrimary);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${symbol}${displayAmount.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+        doc.text(`${symbol}${displayAmount.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 3.5, { align: 'right' });
 
         rowY += rowHeight;
       }
@@ -411,16 +422,16 @@ export function generatePDFReport(options: PDFExportOptions): void {
         }
 
         doc.setTextColor(...COLORS.textSecondary);
-        doc.setFontSize(7);
+        doc.setFontSize(5);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${i + 1}`, margin + 8, rowY + 5.5);
+        doc.text(`${i + 1}`, margin + 8, rowY + 3.5);
 
         doc.setTextColor(...COLORS.textPrimary);
-        doc.text(dateStr, margin + 20, rowY + 5.5);
+        doc.text(dateStr, margin + 20, rowY + 3.5);
 
         doc.setTextColor(...COLORS.textPrimary);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${symbol}${displayAmount.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+        doc.text(`${symbol}${displayAmount.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 3.5, { align: 'right' });
 
         rowY += rowHeight;
       }
@@ -431,11 +442,11 @@ export function generatePDFReport(options: PDFExportOptions): void {
     doc.rect(margin + 4, rowY, contentWidth - 8, rowHeight, 'F');
 
     doc.setTextColor(...COLORS.textSecondary);
-    doc.setFontSize(7);
+    doc.setFontSize(5);
     doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL SCHEDULED', margin + 20, rowY + 5.5);
+    doc.text('TOTAL SCHEDULED', margin + 20, rowY + 3.5);
     doc.setTextColor(...COLORS.primary);
-    doc.text(`${symbol}${totalForDisplay.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 5.5, { align: 'right' });
+    doc.text(`${symbol}${totalForDisplay.toLocaleString('en-US')}`, pageWidth - margin - 8, rowY + 3.5, { align: 'right' });
 
     yPos += scheduleCardHeight + 6;
   } else {
