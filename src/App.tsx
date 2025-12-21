@@ -175,7 +175,7 @@ function App() {
               />
             </div>
 
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-4 self-start">
               <ProjectForecast
                 result={result}
                 currency={currency}
