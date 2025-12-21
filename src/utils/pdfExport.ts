@@ -160,8 +160,8 @@ export function generatePDFReport(options: PDFExportOptions): void {
   const leftColX = margin;
   const rightColX = margin + colWidth + 6;
 
-  // Property Details Card
-  const propCardHeight = 52;
+  // Property Details Card - matching dashboard exactly
+  const propCardHeight = 62;
   doc.setFillColor(...COLORS.surface);
   doc.roundedRect(leftColX, yPos, colWidth, propCardHeight, 2, 2, 'F');
   doc.setDrawColor(...COLORS.border);
@@ -174,10 +174,13 @@ export function generatePDFReport(options: PDFExportOptions): void {
 
   const propLabelX = leftColX + 6;
   const propValueY1 = yPos + 18;
-  const propValueY2 = yPos + 32;
-  const propValueY3 = yPos + 46;
+  const propValueY2 = yPos + 30;
+  const propValueY3 = yPos + 42;
+  const propValueY4 = yPos + 54;
   const propMaxWidth = colWidth - 12;
+  const propRightCol = propLabelX + propMaxWidth / 2 + 5;
 
+  // Row 1: Project Name
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
@@ -186,6 +189,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setFontSize(8);
   doc.text(truncateText(doc, data.property.projectName || 'Not specified', propMaxWidth), propLabelX, propValueY1 + 5);
 
+  // Row 2: Location
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.text('Location', propLabelX, propValueY2);
@@ -193,6 +197,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setFontSize(8);
   doc.text(truncateText(doc, data.property.location || 'Not specified', propMaxWidth), propLabelX, propValueY2 + 5);
 
+  // Row 3: Total Price + Purchase Date
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.text('Total Price', propLabelX, propValueY3);
@@ -201,19 +206,30 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setFont('helvetica', 'bold');
   doc.text(`${symbol}${formatDisplay(data.property.totalPrice)}`, propLabelX, propValueY3 + 5);
 
-  // Handover on right side of property card
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text('Handover', propLabelX + propMaxWidth / 2 + 10, propValueY3);
+  doc.text('Purchase Date', propRightCol, propValueY3);
+  doc.setTextColor(...COLORS.textPrimary);
+  doc.setFontSize(8);
+  const purchaseDateStr = data.property.purchaseDate
+    ? new Date(data.property.purchaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Not set';
+  doc.text(purchaseDateStr, propRightCol, propValueY3 + 5);
+
+  // Row 4: Handover Date
+  doc.setTextColor(...COLORS.textSecondary);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Handover Date', propLabelX, propValueY4);
   doc.setTextColor(...COLORS.textPrimary);
   doc.setFontSize(8);
   const handoverDateStr = data.property.handoverDate
-    ? new Date(data.property.handoverDate).toLocaleDateString()
+    ? new Date(data.property.handoverDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : 'Not set';
-  doc.text(handoverDateStr, propLabelX + propMaxWidth / 2 + 10, propValueY3 + 5);
+  doc.text(handoverDateStr, propLabelX, propValueY4 + 5);
 
-  // Exit Strategy Card (simplified - only Flip at Completion)
+  // Exit Strategy Card - matching dashboard exactly
   doc.setFillColor(...COLORS.surface);
   doc.roundedRect(rightColX, yPos, colWidth, propCardHeight, 2, 2, 'F');
   doc.setDrawColor(...COLORS.border);
@@ -233,11 +249,13 @@ export function generatePDFReport(options: PDFExportOptions): void {
     ? ((data.exit.projectedSalesPrice - data.property.totalPrice) / data.property.totalPrice) * 100
     : 0;
   const closingCosts = data.exit.projectedSalesPrice * (data.exit.closingCostPercent / 100);
+  const exitRightCol = rightColX + colWidth / 2;
 
+  // Row 1: Sale Price + Appreciation
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text('Sale Price', rightColX + 6, propValueY1 + 2);
+  doc.text('Projected Sale Price', rightColX + 6, propValueY1 + 2);
   doc.setTextColor(...COLORS.textPrimary);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
@@ -246,19 +264,33 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text('Appreciation', rightColX + colWidth / 2, propValueY1 + 2);
+  doc.text('Appreciation', exitRightCol, propValueY1 + 2);
   doc.setTextColor(...(appreciation >= 0 ? COLORS.green : COLORS.red));
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${appreciation >= 0 ? '+' : ''}${appreciation.toFixed(1)}%`, rightColX + colWidth / 2, propValueY1 + 7);
+  doc.text(`${appreciation >= 0 ? '+' : ''}${appreciation.toFixed(1)}%`, exitRightCol, propValueY1 + 7);
 
+  // Row 2: Sale Date (= handover for flip strategy)
   doc.setTextColor(...COLORS.textSecondary);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Closing Costs (${data.exit.closingCostPercent}%)`, rightColX + 6, propValueY2 + 2);
+  doc.text('Sale Date', rightColX + 6, propValueY2 + 2);
   doc.setTextColor(...COLORS.textPrimary);
   doc.setFontSize(8);
-  doc.text(`${symbol}${formatDisplay(closingCosts)}`, rightColX + 6, propValueY2 + 7);
+  // Sale date = handover date for flip at completion
+  const saleDateStr = data.property.handoverDate
+    ? new Date(data.property.handoverDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Set handover date';
+  doc.text(saleDateStr, rightColX + 6, propValueY2 + 7);
+
+  // Row 3: Closing Costs
+  doc.setTextColor(...COLORS.textSecondary);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Closing Costs (${data.exit.closingCostPercent}%)`, rightColX + 6, propValueY3 + 2);
+  doc.setTextColor(...COLORS.textPrimary);
+  doc.setFontSize(8);
+  doc.text(`${symbol}${formatDisplay(closingCosts)}`, rightColX + 6, propValueY3 + 7);
 
   yPos += propCardHeight + 6;
 
@@ -312,15 +344,19 @@ export function generatePDFReport(options: PDFExportOptions): void {
     let totalForDisplay = idrToDisplayNum(remaining);
 
     if (hasSchedule) {
-      // Use ACTUAL stored schedule data - NO recalculation
-      // This preserves all manual edits to dates and amounts
-      let actualDisplayTotal = 0;
+      // Match the UI exactly - use same rounding adjustment for last payment
+      // This ensures PDF shows exactly what the dashboard shows
+      const remainingDisplay = idrToDisplayNum(remaining);
+      const displayAmounts = scheduleEntries.map(entry => idrToDisplayNum(entry.amount));
+      const sumExceptLast = displayAmounts.slice(0, -1).reduce((sum, amt) => sum + amt, 0);
+      // Last payment adjusted to ensure total matches exactly (same as UI)
+      const lastDisplayAmount = remainingDisplay - sumExceptLast;
 
       for (let i = 0; i < scheduleEntries.length; i++) {
         const entry = scheduleEntries[i];
-        // Use the ACTUAL stored amount converted to display currency
-        const displayAmount = idrToDisplayNum(entry.amount);
-        actualDisplayTotal += displayAmount;
+        const isLast = i === scheduleEntries.length - 1;
+        // Use adjusted last payment to match UI display exactly
+        const displayAmount = isLast ? lastDisplayAmount : displayAmounts[i];
 
         // Use the EXACT date from the schedule (preserves manual edits)
         const dateStr = new Date(entry.date).toLocaleDateString('en-US', {
@@ -350,8 +386,8 @@ export function generatePDFReport(options: PDFExportOptions): void {
         rowY += rowHeight;
       }
 
-      // Use actual sum for the total row (preserves manual edits)
-      totalForDisplay = actualDisplayTotal;
+      // Total matches the remaining display amount (same as UI)
+      totalForDisplay = remainingDisplay;
     } else {
       // Calculate payments (fallback for legacy data)
       // Use display currency for calculations to avoid rounding issues
