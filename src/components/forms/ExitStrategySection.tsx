@@ -92,31 +92,28 @@ export function ExitStrategySection({
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium text-text-secondary">Closing Costs</span>
           <span className="text-xs text-text-secondary/70">Taxes, fees, commissions</span>
-          <div className="flex gap-3">
-            <div className="relative w-20">
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="20"
-                value={data.closingCostPercent}
-                onChange={(e) => onUpdate('closingCostPercent', parseFloat(e.target.value) || 0)}
-                className="w-full rounded-lg bg-surface-dark border border-border-dark px-3 py-3 text-white font-mono text-center focus:border-primary focus:outline-none"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
-                %
-              </span>
-            </div>
-            <div className="relative flex-grow">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-mono">
-                {symbol}
-              </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 rounded-lg bg-surface-dark border border-border-dark px-3 py-3">
               <input
                 type="text"
-                value={formatDisplay(closingCostIDR)}
-                readOnly
-                className="w-full rounded-lg bg-surface-dark/50 border border-border-dark px-4 py-3 pl-12 text-white font-mono cursor-not-allowed"
+                inputMode="decimal"
+                value={data.closingCostPercent}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, '');
+                  const num = parseFloat(val);
+                  if (!isNaN(num) && num >= 0 && num <= 20) {
+                    onUpdate('closingCostPercent', num);
+                  } else if (val === '' || val === '.') {
+                    onUpdate('closingCostPercent', 0);
+                  }
+                }}
+                className="w-12 bg-transparent text-white font-mono text-right focus:outline-none"
               />
+              <span className="text-text-secondary font-mono">%</span>
+            </div>
+            <span className="text-text-secondary">=</span>
+            <div className="flex-grow rounded-lg bg-surface-dark/50 border border-border-dark px-4 py-3 text-white font-mono">
+              {symbol} {formatDisplay(closingCostIDR)}
             </div>
           </div>
         </label>
