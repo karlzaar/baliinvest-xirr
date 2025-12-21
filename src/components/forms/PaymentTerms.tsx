@@ -124,42 +124,28 @@ export function PaymentTerms({
                 <span className="material-symbols-outlined text-primary text-lg">event_note</span>
                 <h3 className="font-bold text-white">Remaining Payment Schedule</h3>
               </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onRegenerateSchedule}
-                  className="text-xs text-text-secondary hover:text-primary transition-colors flex items-center gap-1"
-                  title="Reset schedule to even payments"
-                >
-                  <span className="material-symbols-outlined text-sm">refresh</span>
-                  Reset
-                </button>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    max="24"
-                    value={data.installmentMonths}
-                    onChange={(e) => {
-                      onUpdate('installmentMonths', parseInt(e.target.value) || 1);
-                      // Schedule will be regenerated when user clicks Reset
-                    }}
-                    className="w-14 rounded bg-surface-dark border border-border-dark px-2 py-1.5 text-white text-sm text-center focus:border-primary focus:outline-none"
-                  />
-                  <span className="text-sm text-text-secondary">months</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="24"
+                  value={data.installmentMonths}
+                  onChange={(e) => {
+                    const newMonths = parseInt(e.target.value) || 1;
+                    onUpdate('installmentMonths', newMonths);
+                    // Auto-regenerate schedule with new month count
+                    setTimeout(() => onRegenerateSchedule(), 0);
+                  }}
+                  className="w-14 rounded bg-surface-dark border border-border-dark px-2 py-1.5 text-white text-sm text-center focus:border-primary focus:outline-none"
+                />
+                <span className="text-sm text-text-secondary">months</span>
               </div>
             </div>
 
-            {/* Show message if no schedule yet */}
+            {/* Auto-generate if no schedule and price is set */}
             {!hasSchedule && totalPriceIDR > 0 && (
-              <div className="text-center py-8 text-text-secondary">
-                <p className="mb-3">Click "Reset" to generate payment schedule</p>
-                <button
-                  onClick={onRegenerateSchedule}
-                  className="px-4 py-2 bg-primary text-[#112217] rounded-lg font-medium hover:bg-primary/90 transition-colors"
-                >
-                  Generate Schedule
-                </button>
+              <div className="text-center py-6 text-text-secondary">
+                <p className="text-sm">Set the number of months above to generate schedule</p>
               </div>
             )}
 
@@ -214,7 +200,17 @@ export function PaymentTerms({
                 {/* Total Row */}
                 <div className="grid grid-cols-12 items-center py-3 px-4 bg-[#0d1a12] border-t border-border-dark">
                   <div className="col-span-1"></div>
-                  <div className="col-span-5 text-text-secondary font-medium text-sm">Total Scheduled</div>
+                  <div className="col-span-5 flex items-center gap-2">
+                    <span className="text-text-secondary font-medium text-sm">Total Scheduled</span>
+                    {Math.abs(scheduleTotal - remainingIDR) >= 1 && (
+                      <button
+                        onClick={onRegenerateSchedule}
+                        className="text-xs text-amber-400 hover:text-amber-300 underline"
+                      >
+                        Distribute evenly
+                      </button>
+                    )}
+                  </div>
                   <div className="col-span-6 text-right">
                     <span className={`font-mono font-bold ${
                       Math.abs(scheduleTotal - remainingIDR) < 1 ? 'text-primary' : 'text-amber-400'
@@ -223,7 +219,7 @@ export function PaymentTerms({
                     </span>
                     {Math.abs(scheduleTotal - remainingIDR) >= 1 && (
                       <div className="text-xs text-amber-400 mt-1">
-                        {scheduleTotal > remainingIDR ? '+' : ''}{formatDisplay(scheduleTotal - remainingIDR)} difference
+                        {scheduleTotal > remainingIDR ? '+' : ''}{formatDisplay(scheduleTotal - remainingIDR)} vs expected
                       </div>
                     )}
                   </div>
