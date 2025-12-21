@@ -89,6 +89,17 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
           </div>
         </label>
 
+        {/* Purchase Date */}
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-text-secondary">Purchase Date</span>
+          <input
+            type="date"
+            value={data.purchaseDate}
+            onChange={(e) => onUpdate('purchaseDate', e.target.value)}
+            className="w-full rounded-lg bg-surface-dark border border-border-dark px-4 py-3 text-white focus:border-primary focus:outline-none h-[54px]"
+          />
+        </label>
+
         {/* Handover Date */}
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium text-text-secondary">Expected Handover Date</span>

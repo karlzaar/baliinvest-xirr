@@ -2,6 +2,7 @@ export interface PropertyDetails {
   projectName: string;
   location: string;
   totalPrice: number;  // Always stored in IDR
+  purchaseDate: string;
   handoverDate: string;
   currency: 'IDR' | 'USD' | 'AUD' | 'EUR';
 }

@@ -11,6 +11,7 @@ const DEFAULT_INVESTMENT: InvestmentData = {
     projectName: '',
     location: '',
     totalPrice: 0,
+    purchaseDate: '',
     handoverDate: '',
     currency: 'IDR'
   },
