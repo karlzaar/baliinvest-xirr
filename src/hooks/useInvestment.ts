@@ -106,12 +106,18 @@ export function useInvestment() {
     }
   }, [currency, idrToDisplay]);
   
-  // Helper to calculate months until a date
-  const getMonthsUntil = (dateStr: string): number => {
-    if (!dateStr) return 6; // default
-    const target = new Date(dateStr);
-    const now = new Date();
-    const months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+  // Helper to calculate months between purchase date and handover date
+  const getMonthsBetween = (purchaseDateStr: string, handoverDateStr: string): number => {
+    if (!handoverDateStr) return 6; // default
+
+    // Use purchase date if set, otherwise use today
+    const startDate = purchaseDateStr ? new Date(purchaseDateStr) : new Date();
+    const endDate = new Date(handoverDateStr);
+
+    // Calculate months from purchase to handover (installments start month after purchase)
+    const months = (endDate.getFullYear() - startDate.getFullYear()) * 12
+                 + (endDate.getMonth() - startDate.getMonth());
+
     return Math.max(1, months); // minimum 1 month
   };
 
@@ -119,15 +125,21 @@ export function useInvestment() {
   const createSchedule = (
     totalPrice: number,
     downPaymentPercent: number,
-    installmentMonths: number
+    installmentMonths: number,
+    purchaseDateStr?: string
   ): PaymentScheduleEntry[] => {
     if (totalPrice <= 0 || installmentMonths <= 0) return [];
     const remaining = totalPrice * (1 - downPaymentPercent / 100);
     const basePayment = Math.floor(remaining / installmentMonths);
 
+    // Start from purchase date if provided, otherwise use today
+    const startDate = purchaseDateStr ? new Date(purchaseDateStr) : new Date();
+
     return Array.from({ length: installmentMonths }, (_, i) => {
-      const paymentDate = new Date();
+      // First installment is 1 month after purchase, then monthly until handover
+      const paymentDate = new Date(startDate);
       paymentDate.setMonth(paymentDate.getMonth() + i + 1);
+
       const isLast = i === installmentMonths - 1;
       const previousTotal = basePayment * i;
       const amount = isLast ? remaining - previousTotal : basePayment;
@@ -148,20 +160,28 @@ export function useInvestment() {
     setData(prev => {
       const newProperty = { ...prev.property, [key]: value };
 
-      // When handover date changes, update installment months and regenerate schedule
-      if (key === 'handoverDate' && typeof value === 'string' && value) {
-        const monthsUntilHandover = getMonthsUntil(value);
+      // When handover date or purchase date changes, recalculate months and regenerate schedule
+      const shouldRecalculate =
+        (key === 'handoverDate' && typeof value === 'string' && value) ||
+        (key === 'purchaseDate' && typeof value === 'string' && value && prev.property.handoverDate);
+
+      if (shouldRecalculate) {
+        const purchaseDate = key === 'purchaseDate' ? value as string : prev.property.purchaseDate;
+        const handoverDate = key === 'handoverDate' ? value as string : prev.property.handoverDate;
+
+        const months = getMonthsBetween(purchaseDate, handoverDate);
         const newSchedule = createSchedule(
           prev.property.totalPrice,
           prev.payment.downPaymentPercent,
-          monthsUntilHandover
+          months,
+          purchaseDate
         );
         return {
           ...prev,
           property: newProperty,
           payment: {
             ...prev.payment,
-            installmentMonths: monthsUntilHandover,
+            installmentMonths: months,
             schedule: newSchedule
           }
         };
@@ -182,7 +202,8 @@ export function useInvestment() {
         const newSchedule = createSchedule(
           idr,
           prev.payment.downPaymentPercent,
-          prev.payment.installmentMonths
+          prev.payment.installmentMonths,
+          prev.property.purchaseDate
         );
         return {
           ...prev,
@@ -219,13 +240,17 @@ export function useInvestment() {
   const generateSchedule = useCallback((
     totalPrice: number,
     downPaymentPercent: number,
-    installmentMonths: number
+    installmentMonths: number,
+    purchaseDateStr?: string
   ): PaymentScheduleEntry[] => {
     const remaining = totalPrice * (1 - downPaymentPercent / 100);
     const basePayment = Math.floor(remaining / installmentMonths);
 
+    // Start from purchase date if provided, otherwise use today
+    const startDate = purchaseDateStr ? new Date(purchaseDateStr) : new Date();
+
     return Array.from({ length: installmentMonths }, (_, i) => {
-      const paymentDate = new Date();
+      const paymentDate = new Date(startDate);
       paymentDate.setMonth(paymentDate.getMonth() + i + 1);
 
       // Last payment gets any rounding difference
@@ -254,7 +279,8 @@ export function useInvestment() {
           schedule: generateSchedule(
             prev.property.totalPrice,
             prev.payment.downPaymentPercent,
-            months
+            months,
+            prev.property.purchaseDate
           )
         }
       };
