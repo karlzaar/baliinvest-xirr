@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { PaymentTerms as PaymentTermsType, PaymentScheduleEntry } from '../../types/investment';
 
 interface Props {
@@ -33,6 +34,13 @@ export function PaymentTerms({
   // Calculate display total (which will always match remaining due to last-payment adjustment)
   const remainingDisplay = idrToDisplay(remainingIDR);
   const scheduleTotalDisplay = hasSchedule ? remainingDisplay : 0;
+
+  // Auto-generate schedule when price is set but no schedule exists
+  useEffect(() => {
+    if (!hasSchedule && totalPriceIDR > 0) {
+      onRegenerateSchedule();
+    }
+  }, [hasSchedule, totalPriceIDR, onRegenerateSchedule]);
 
   const parseAmountInput = (value: string): number => {
     const digits = value.replace(/\D/g, '');
@@ -140,15 +148,6 @@ export function PaymentTerms({
                 <span className="text-sm text-text-secondary">months</span>
               </div>
             </div>
-
-            {/* Auto-generate schedule when price is set but no schedule exists */}
-            {!hasSchedule && totalPriceIDR > 0 && (
-              (() => {
-                // Trigger schedule generation
-                setTimeout(() => onRegenerateSchedule(), 0);
-                return null;
-              })()
-            )}
 
             {hasSchedule && (
               <div className="rounded-lg border border-border-dark bg-surface-dark overflow-hidden">
