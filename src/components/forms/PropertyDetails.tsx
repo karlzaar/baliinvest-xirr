@@ -33,9 +33,35 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
 
   return (
     <section className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-      <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
-        <span className="material-symbols-outlined text-primary">villa</span>
-        <h2 className="text-xl font-bold text-text-primary">Property Details</h2>
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary">villa</span>
+          <h2 className="text-xl font-bold text-text-primary">Property Details</h2>
+        </div>
+
+        {/* Currency Selector - Compact dropdown in header */}
+        <div className="flex items-center gap-3">
+          {data.currency !== 'IDR' && (
+            <span className="text-xs text-text-muted hidden sm:block">
+              1 {data.currency} = {rate.toLocaleString()} IDR
+            </span>
+          )}
+          <div className="relative">
+            <select
+              value={data.currency}
+              onChange={(e) => onUpdate('currency', e.target.value as 'IDR' | 'USD' | 'AUD' | 'EUR')}
+              className="appearance-none bg-primary-light text-primary font-semibold text-sm pl-3 pr-8 py-1.5 rounded-lg border border-primary/20 cursor-pointer hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+            >
+              <option value="IDR">IDR</option>
+              <option value="USD">USD</option>
+              <option value="AUD">AUD</option>
+              <option value="EUR">EUR</option>
+            </select>
+            <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-primary text-sm pointer-events-none">
+              expand_more
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -131,36 +157,6 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
             onChange={(e) => onUpdate('handoverDate', e.target.value)}
             className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 text-text-primary focus:border-primary focus:outline-none h-[54px]"
           />
-        </label>
-
-        {/* Currency Selector */}
-        <label className="flex flex-col gap-2 md:col-span-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-text-secondary">Display Currency</span>
-            {data.currency !== 'IDR' && (
-              <span className="text-xs text-primary">
-                1 {data.currency} = {rate.toLocaleString()} IDR
-              </span>
-            )}
-          </div>
-          <div className="relative">
-            <select
-              value={data.currency}
-              onChange={(e) => onUpdate('currency', e.target.value as 'IDR' | 'USD' | 'AUD' | 'EUR')}
-              className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 text-text-primary focus:border-primary focus:outline-none appearance-none"
-            >
-              <option value="IDR">IDR - Indonesian Rupiah</option>
-              <option value="USD">USD - US Dollar</option>
-              <option value="AUD">AUD - Australian Dollar</option>
-              <option value="EUR">EUR - Euro</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
-              expand_more
-            </span>
-          </div>
-          <p className="text-xs text-text-muted">
-            Currency only changes display. All calculations use IDR internally.
-          </p>
         </label>
       </div>
     </section>
