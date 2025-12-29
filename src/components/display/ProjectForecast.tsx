@@ -2,12 +2,12 @@ import type { XIRRResult } from '../../types/investment';
 
 interface Props {
   result: XIRRResult;
-  currency: string;
-  formatAbbrev: (idr: number) => string;
+  symbol: string;
+  formatDisplay: (idr: number) => string;
   onExportPDF?: () => void;
 }
 
-export function ProjectForecast({ result, currency, formatAbbrev, onExportPDF }: Props) {
+export function ProjectForecast({ result, symbol, formatDisplay, onExportPDF }: Props) {
   const xirrPercent = (result.rate * 100).toFixed(1);
   const isPositive = result.rate >= 0;
 
@@ -38,13 +38,13 @@ export function ProjectForecast({ result, currency, formatAbbrev, onExportPDF }:
           <div className="flex justify-between border-b border-border pb-2">
             <span className="text-sm text-text-secondary">Total Invested</span>
             <span className="text-sm font-mono text-text-primary">
-              {formatAbbrev(result.totalInvested)} {currency}
+              {symbol} {formatDisplay(result.totalInvested)}
             </span>
           </div>
           <div className="flex justify-between border-b border-border pb-2">
             <span className="text-sm text-text-secondary">Net Profit</span>
             <span className={`text-sm font-mono ${result.netProfit >= 0 ? 'text-primary' : 'text-negative'}`}>
-              {result.netProfit >= 0 ? '+' : ''}{formatAbbrev(result.netProfit)} {currency}
+              {result.netProfit >= 0 ? '+' : ''}{symbol} {formatDisplay(Math.abs(result.netProfit))}
             </span>
           </div>
           <div className="flex justify-between">

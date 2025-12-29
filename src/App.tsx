@@ -202,8 +202,8 @@ function App() {
             <div className="lg:col-span-4">
               <ProjectForecast
                 result={result}
-                currency={currency}
-                formatAbbrev={formatAbbrev}
+                symbol={symbol}
+                formatDisplay={formatDisplay}
                 onExportPDF={handleExportPDF}
               />
             </div>
