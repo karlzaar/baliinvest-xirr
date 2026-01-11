@@ -1,6 +1,9 @@
 // Layout components
 export { Header } from './layout/Header';
 
+// UI components
+export { Tooltip } from './ui/Tooltip';
+
 // Form components
 export { PropertyDetails } from './forms/PropertyDetails';
 export { PaymentTerms } from './forms/PaymentTerms';
