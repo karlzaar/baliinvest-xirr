@@ -7,6 +7,7 @@ import TopInputsPanel from './components/TopInputsPanel';
 import AssumptionsPanel from './components/AssumptionsPanel';
 import ProjectionsTable from './components/ProjectionsTable';
 import ReportView from './components/ReportView';
+import { Toast } from '../../components/ui/Toast';
 
 const DRAFT_STORAGE_KEY = 'rental_roi_draft';
 
@@ -51,15 +52,20 @@ export function RentalROICalculator() {
   const [isSaving, setIsSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleSaveDraft = useCallback(() => {
     setIsSaving(true);
     try {
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(assumptions));
-      setTimeout(() => setIsSaving(false), 300);
+      setTimeout(() => {
+        setIsSaving(false);
+        setToast({ message: 'Draft saved successfully!', type: 'success' });
+      }, 300);
     } catch (e) {
       console.error('Failed to save draft:', e);
       setIsSaving(false);
+      setToast({ message: 'Failed to save draft', type: 'error' });
     }
   }, [assumptions]);
 
@@ -69,6 +75,7 @@ export function RentalROICalculator() {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       setResetKey(k => k + 1);
       setShowResetConfirm(false);
+      setToast({ message: 'All values reset', type: 'success' });
     } else {
       setShowResetConfirm(true);
       setTimeout(() => setShowResetConfirm(false), 3000);
@@ -94,6 +101,14 @@ export function RentalROICalculator() {
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="max-w-[100%] mx-auto">
         <header className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -138,7 +153,7 @@ export function RentalROICalculator() {
                 className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer appearance-none pr-4"
               >
                 {Object.values(CURRENCIES).map(c => (
-                  <option key={c.code} value={c.code}>{c.code}</option>
+                  <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>
                 ))}
               </select>
             </div>

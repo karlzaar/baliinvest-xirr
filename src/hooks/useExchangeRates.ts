@@ -12,6 +12,11 @@ const FALLBACK_RATES: Record<string, number> = {
   USD: 16000,
   AUD: 10300,
   EUR: 17000,
+  GBP: 20000,
+  INR: 190,
+  CNY: 2200,
+  AED: 4350,
+  RUB: 160,
 };
 
 const CACHE_KEY = 'baliinvest_exchange_rates';
@@ -69,12 +74,17 @@ export function useExchangeRates() {
       // e.g., USD:1, IDR:16669, AUD:1.51, EUR:0.852
       // We need: how many IDR per 1 unit of each currency
       const idrPerUsd = data.rates.IDR || 16000;
-      
+
       const rates: Record<string, number> = {
         IDR: 1,
         USD: Math.round(idrPerUsd), // 1 USD = ~16669 IDR
         AUD: Math.round(idrPerUsd / data.rates.AUD), // 1 AUD = IDR/AUD rate
         EUR: Math.round(idrPerUsd / data.rates.EUR), // 1 EUR = IDR/EUR rate
+        GBP: Math.round(idrPerUsd / data.rates.GBP), // 1 GBP = IDR/GBP rate
+        INR: Math.round(idrPerUsd / data.rates.INR), // 1 INR = IDR/INR rate
+        CNY: Math.round(idrPerUsd / data.rates.CNY), // 1 CNY = IDR/CNY rate
+        AED: Math.round(idrPerUsd / data.rates.AED), // 1 AED = IDR/AED rate
+        RUB: Math.round(idrPerUsd / data.rates.RUB), // 1 RUB = IDR/RUB rate
       };
       
       console.log('Fetched exchange rates:', rates);

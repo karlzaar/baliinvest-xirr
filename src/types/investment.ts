@@ -5,7 +5,7 @@ export interface PropertyDetails {
   propertySize: number;  // Size in square meters (sqm)
   purchaseDate: string;
   handoverDate: string;
-  currency: 'IDR' | 'USD' | 'AUD' | 'EUR';
+  currency: 'IDR' | 'USD' | 'AUD' | 'EUR' | 'GBP' | 'INR' | 'CNY' | 'AED' | 'RUB';
 }
 
 export interface PaymentScheduleEntry {

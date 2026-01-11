@@ -36,6 +36,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               onChange={(v) => handleChange('initialInvestment', v)}
               currency={currency}
               icon={currency.symbol}
+              autoFocus
             />
             <TopInputGroup
               label="Start Year"
@@ -43,7 +44,6 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               placeholder={PLACEHOLDER_VALUES.baseYear}
               onChange={(v) => handleChange('baseYear', v)}
               noSeparator
-              active
             />
           </div>
         </section>
@@ -130,8 +130,8 @@ const TopInputGroup: React.FC<{
   noSeparator?: boolean;
   icon?: string;
   currency?: CurrencyConfig;
-  active?: boolean;
-}> = ({ label, value, placeholder, onChange, isPercentage, noSeparator, icon, currency, active }) => {
+  autoFocus?: boolean;
+}> = ({ label, value, placeholder, onChange, isPercentage, noSeparator, icon, currency, autoFocus }) => {
   const displayValue = currency ? (value / currency.rate) : value;
   const displayPlaceholder = currency && placeholder ? (placeholder / currency.rate) : (placeholder || 0);
   const [inputValue, setInputValue] = useState<string>(displayValue ? displayValue.toString() : '');
@@ -165,7 +165,7 @@ const TopInputGroup: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className={`block text-[10px] font-black uppercase tracking-widest ${active ? 'text-[#4f46e5]' : 'text-slate-600'}`}>
+      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-600">
         {label}
       </label>
       <div className="relative group">
@@ -177,7 +177,9 @@ const TopInputGroup: React.FC<{
           value={inputValue}
           placeholder={placeholderText}
           onChange={handleInputChange}
-          className={`w-full bg-[#fcfdfe] border ${active ? 'border-[#4f46e5] ring-1 ring-[#4f46e5]' : 'border-slate-200'} rounded-2xl ${icon ? 'pl-11 pr-4' : 'px-5'} py-4 text-[16px] font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] transition-all tabular-nums`}
+          autoFocus={autoFocus}
+          className="w-full bg-[#fcfdfe] border border-slate-200 rounded-2xl py-4 text-[16px] font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] transition-all tabular-nums"
+          style={{ paddingLeft: icon ? '2.75rem' : '1.25rem', paddingRight: '1rem' }}
         />
         {isPercentage && (
           <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-slate-300">%</span>

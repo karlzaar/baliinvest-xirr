@@ -19,7 +19,6 @@ export function XIRRCalculator() {
     ratesLoading,
     ratesError,
     ratesSource,
-    ratesLastUpdated,
     refreshRates,
     formatDisplay,
     formatAbbrev,
@@ -105,7 +104,7 @@ export function XIRRCalculator() {
   const displayExitPrice = idrToDisplay(data.exit.projectedSalesPrice);
 
   return (
-    <>
+    <div className="min-h-screen bg-background text-text-primary selection:bg-primary-light selection:text-primary -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
       {toast && (
         <Toast
           message={toast.message}
@@ -114,37 +113,88 @@ export function XIRRCalculator() {
         />
       )}
 
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black text-text-primary tracking-tight">
-              XIRR Calculator
-            </h1>
-            <p className="text-text-muted text-lg mt-2">
-              Calculate the internal rate of return for your Bali villa investment with irregular cash flows.
-            </p>
+      <div className="max-w-[100%] mx-auto">
+        <header className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary p-2.5 rounded-lg shadow-sm">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary tracking-tight">XIRR Calculator</h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-text-muted font-medium text-xs">Investment Return Analysis</span>
+                <span className="text-border">|</span>
+                <span className="text-text-muted font-medium text-xs">Irregular Cash Flows</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 flex-wrap">
+            {currency !== 'IDR' && (
+              <div className="flex items-center gap-3 bg-surface px-4 py-2 rounded-lg border border-border shadow-sm">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                  1 {currency} = {rate.toLocaleString()} IDR
+                </span>
+                {ratesLoading ? (
+                  <span className="text-yellow-500 text-xs">(loading...)</span>
+                ) : ratesError ? (
+                  <span className="text-negative text-xs" title={ratesError}>!</span>
+                ) : (
+                  <span className="text-accent text-xs" title={`Source: ${ratesSource}`}>✓</span>
+                )}
+                <button
+                  onClick={refreshRates}
+                  className="text-primary hover:text-primary-dark text-xs underline"
+                  disabled={ratesLoading}
+                >
+                  Refresh
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mr-3">Currency</span>
+              <select
+                value={currency}
+                onChange={(e) => updateProperty('currency', e.target.value as 'IDR' | 'USD' | 'AUD' | 'EUR' | 'GBP' | 'INR' | 'CNY' | 'AED' | 'RUB')}
+                className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer"
+              >
+                <option value="IDR">Rp IDR</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="AUD">A$ AUD</option>
+                <option value="GBP">£ GBP</option>
+                <option value="INR">₹ INR</option>
+                <option value="CNY">¥ CNY</option>
+                <option value="AED">د.إ AED</option>
+                <option value="RUB">₽ RUB</option>
+              </select>
+            </div>
+
             <button
               onClick={handleReset}
-              className={`flex items-center justify-center gap-2 rounded-lg h-9 px-4 transition-colors text-sm font-medium ${
+              className={`px-5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all active:scale-95 ${
                 showResetConfirm
-                  ? 'bg-negative border border-negative text-white animate-pulse'
-                  : 'bg-transparent border border-negative/30 text-negative hover:bg-negative-light'
+                  ? 'bg-red-600 text-white animate-pulse'
+                  : 'bg-red-500 text-white hover:bg-red-600'
               }`}
             >
-              <span className="material-symbols-outlined text-sm">delete_forever</span>
-              <span>{showResetConfirm ? 'Click to Confirm' : 'Reset Values'}</span>
+              {showResetConfirm ? 'Click to Confirm' : 'Reset Values'}
             </button>
+
             <button
               onClick={handleSaveDraft}
               disabled={isSaving}
-              className="flex items-center justify-center gap-2 rounded-lg h-9 px-4 bg-transparent border border-primary text-primary hover:bg-primary-light transition-colors text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary text-white px-5 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-primary-dark transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSaving ? (
                 <>
-                  <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
                   <span>Saving...</span>
                 </>
               ) : (
@@ -152,79 +202,55 @@ export function XIRRCalculator() {
               )}
             </button>
           </div>
-        </div>
+        </header>
 
-        {currency !== 'IDR' && (
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            <span className="text-text-secondary">
-              Exchange Rate: 1 {currency} = {rate.toLocaleString()} IDR
-            </span>
-            {ratesLoading ? (
-              <span className="text-yellow-400 text-xs">(loading...)</span>
-            ) : ratesError ? (
-              <span className="text-red-400 text-xs" title={ratesError}>⚠️ Using fallback</span>
-            ) : (
-              <span className="text-green-400 text-xs" title={`Source: ${ratesSource}`}>
-                ✓ Updated {ratesLastUpdated}
-              </span>
-            )}
-            <button
-              onClick={refreshRates}
-              className="text-accent hover:text-white text-xs underline ml-2"
-              disabled={ratesLoading}
-            >
-              Refresh
-            </button>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-9 space-y-6">
+            <PropertyDetails
+              data={data.property}
+              symbol={symbol}
+              rate={rate}
+              displayPrice={displayPrice}
+              onUpdate={updateProperty}
+              onPriceChange={updatePriceFromDisplay}
+            />
+
+            <PaymentTerms
+              data={data.payment}
+              totalPriceIDR={data.property.totalPrice}
+              symbol={symbol}
+              formatDisplay={formatDisplay}
+              displayToIdr={displayToIdr}
+              idrToDisplay={idrToDisplay}
+              onUpdate={updatePayment}
+              onRegenerateSchedule={regenerateSchedule}
+              onUpdateScheduleEntry={updateScheduleEntry}
+            />
+
+            <ExitStrategySection
+              data={data.exit}
+              totalPriceIDR={data.property.totalPrice}
+              displayExitPrice={displayExitPrice}
+              symbol={symbol}
+              handoverDate={data.property.handoverDate}
+              displayToIdr={displayToIdr}
+              idrToDisplay={idrToDisplay}
+              onUpdate={updateExit}
+              onExitPriceChange={updateExitPriceFromDisplay}
+            />
           </div>
-        )}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 flex flex-col gap-8">
-          <PropertyDetails
-            data={data.property}
-            symbol={symbol}
-            rate={rate}
-            displayPrice={displayPrice}
-            onUpdate={updateProperty}
-            onPriceChange={updatePriceFromDisplay}
-          />
-
-          <PaymentTerms
-            data={data.payment}
-            totalPriceIDR={data.property.totalPrice}
-            symbol={symbol}
-            formatDisplay={formatDisplay}
-            displayToIdr={displayToIdr}
-            idrToDisplay={idrToDisplay}
-            onUpdate={updatePayment}
-            onRegenerateSchedule={regenerateSchedule}
-            onUpdateScheduleEntry={updateScheduleEntry}
-          />
-
-          <ExitStrategySection
-            data={data.exit}
-            totalPriceIDR={data.property.totalPrice}
-            displayExitPrice={displayExitPrice}
-            symbol={symbol}
-            handoverDate={data.property.handoverDate}
-            displayToIdr={displayToIdr}
-            idrToDisplay={idrToDisplay}
-            onUpdate={updateExit}
-            onExitPriceChange={updateExitPriceFromDisplay}
-          />
-        </div>
-
-        <div className="lg:col-span-4">
-          <ProjectForecast
-            result={result}
-            symbol={symbol}
-            formatDisplay={formatDisplay}
-            onExportPDF={handleExportPDF}
-          />
+          <div className="lg:col-span-3">
+            <ProjectForecast
+              result={result}
+              symbol={symbol}
+              formatDisplay={formatDisplay}
+              onExportPDF={handleExportPDF}
+            />
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

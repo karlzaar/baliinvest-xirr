@@ -37,7 +37,12 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   IDR: 'Rp',
   USD: '$',
   AUD: 'A$',
-  EUR: '€'
+  EUR: '€',
+  GBP: '£',
+  INR: '₹',
+  CNY: '¥',
+  AED: 'د.إ',
+  RUB: '₽',
 };
 
 export function useInvestment() {

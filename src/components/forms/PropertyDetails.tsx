@@ -33,34 +33,10 @@ export function PropertyDetails({ data, symbol, rate, displayPrice, onUpdate, on
 
   return (
     <section className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+      <div className="mb-6 flex items-center border-b border-border pb-4">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">villa</span>
           <h2 className="text-xl font-bold text-text-primary">Property Details</h2>
-        </div>
-
-        {/* Currency Selector - Compact dropdown in header */}
-        <div className="flex items-center gap-3">
-          {data.currency !== 'IDR' && (
-            <span className="text-xs text-text-muted hidden sm:block">
-              1 {data.currency} = {rate.toLocaleString()} IDR
-            </span>
-          )}
-          <div className="relative">
-            <select
-              value={data.currency}
-              onChange={(e) => onUpdate('currency', e.target.value as 'IDR' | 'USD' | 'AUD' | 'EUR')}
-              className="appearance-none bg-primary-light text-primary font-semibold text-sm pl-3 pr-8 py-1.5 rounded-lg border border-primary/20 cursor-pointer hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-            >
-              <option value="IDR">IDR</option>
-              <option value="USD">USD</option>
-              <option value="AUD">AUD</option>
-              <option value="EUR">EUR</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-primary text-sm pointer-events-none">
-              expand_more
-            </span>
-          </div>
         </div>
       </div>
 

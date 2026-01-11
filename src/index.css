@@ -1,21 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  /* Light theme matching PDF */
-  --color-primary: #22c55e;
-  --color-primary-dark: #16a34a;
-  --color-primary-light: #dcfce7;
+  /* Unified light theme - slate/indigo palette */
+  --color-primary: #4f46e5;
+  --color-primary-dark: #4338ca;
+  --color-primary-light: #eef2ff;
 
-  --color-background: #fafbfc;
+  --color-accent: #10b981;
+  --color-accent-dark: #059669;
+  --color-accent-light: #d1fae5;
+
+  --color-background: #f1f5f9;
   --color-surface: #ffffff;
-  --color-surface-alt: #f9fafb;
+  --color-surface-alt: #f8fafc;
 
-  --color-border: #e5e7eb;
-  --color-border-light: #f3f4f6;
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
 
-  --color-text-primary: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #9ca3af;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
 
   --color-negative: #ef4444;
   --color-negative-light: #fee2e2;
@@ -31,14 +35,14 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #22c55e;
+  background: #4f46e5;
 }
 
 /* Material symbols styling */
@@ -53,12 +57,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Radio card styles */
 .radio-card-input:checked + .radio-card-content {
-  border-color: #22c55e;
-  background-color: rgba(34, 197, 94, 0.05);
+  border-color: #4f46e5;
+  background-color: rgba(79, 70, 229, 0.05);
 }
 .radio-card-input:checked + .radio-card-content .radio-indicator {
-  border-color: #22c55e;
-  background-color: #22c55e;
+  border-color: #4f46e5;
+  background-color: #4f46e5;
 }
 .radio-card-input:checked + .radio-card-content .radio-indicator::after {
   opacity: 1;
