@@ -49,6 +49,7 @@ export function RentalROICalculator() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSaveDraft = useCallback(() => {
     setIsSaving(true);
@@ -62,9 +63,15 @@ export function RentalROICalculator() {
   }, [assumptions]);
 
   const handleReset = useCallback(() => {
-    setAssumptions(EMPTY_ASSUMPTIONS);
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-  }, []);
+    if (showResetConfirm) {
+      setAssumptions(EMPTY_ASSUMPTIONS);
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      setShowResetConfirm(false);
+    } else {
+      setShowResetConfirm(true);
+      setTimeout(() => setShowResetConfirm(false), 3000);
+    }
+  }, [showResetConfirm]);
 
   const data = useMemo(() => calculateProjections(assumptions), [assumptions]);
   const averages = useMemo(() => calculateAverage(data), [data]);
@@ -122,7 +129,7 @@ export function RentalROICalculator() {
             )}
 
             <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Currency</span>
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Currency</span>
               <select
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value as CurrencyCode)}
@@ -136,9 +143,13 @@ export function RentalROICalculator() {
 
             <button
               onClick={handleReset}
-              className="bg-red-500 text-white px-5 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-red-600 transition-all active:scale-95"
+              className={`px-5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all active:scale-95 ${
+                showResetConfirm
+                  ? 'bg-red-600 text-white animate-pulse'
+                  : 'bg-red-500 text-white hover:bg-red-600'
+              }`}
             >
-              Reset Values
+              {showResetConfirm ? 'Click to Confirm' : 'Reset Values'}
             </button>
 
             <button

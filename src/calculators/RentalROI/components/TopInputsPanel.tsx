@@ -27,7 +27,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* Core Investment Section */}
         <section className="space-y-6">
-          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Core Investment</h3>
+          <h3 className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] mb-4">Core Investment</h3>
           <div className="grid grid-cols-1 gap-6">
             <TopInputGroup
               label={`Initial Capex (${currency.code})`}
@@ -50,7 +50,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
         {/* Year 1 Targets Section */}
         <section className="space-y-6">
-          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Year 1 Targets</h3>
+          <h3 className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] mb-4">Year 1 Targets</h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-6">
             <TopInputGroup
               label="Occupancy %"
@@ -96,11 +96,11 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
       {showOccupancyGrowth && (
         <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Yearly Occupancy Point Increase</h4>
+          <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-6">Yearly Occupancy Point Increase</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4">
             {assumptions.occupancyIncreases.map((val, idx) => (
               <div key={idx} className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase">Y{idx + 2}</label>
+                <label className="text-[9px] font-black text-slate-600 uppercase">Y{idx + 2}</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -165,7 +165,7 @@ const TopInputGroup: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className={`block text-[10px] font-black uppercase tracking-widest ${active ? 'text-[#4f46e5]' : 'text-slate-400'}`}>
+      <label className={`block text-[10px] font-black uppercase tracking-widest ${active ? 'text-[#4f46e5]' : 'text-slate-600'}`}>
         {label}
       </label>
       <div className="relative group">

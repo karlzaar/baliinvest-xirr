@@ -17,7 +17,7 @@ const AssumptionsPanel = ({ assumptions, onChange }: Props) => {
     <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-12 mt-12 mb-4">
       <div className="flex items-center gap-4 mb-16">
         <div className="w-1.5 h-7 bg-slate-200 rounded-full"></div>
-        <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em]">Operational Dynamics & Growth Variables</h2>
+        <h2 className="text-[11px] font-black text-slate-700 uppercase tracking-[0.25em]">Operational Dynamics & Growth Variables</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-24 gap-y-16">
@@ -66,7 +66,7 @@ const SecondaryInput: React.FC<{
 }> = ({ label, value, placeholder, onChange, isPercentage }) => {
   return (
     <div className="space-y-3">
-      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-tighter ml-0.5">
+      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-tighter ml-0.5">
         {label}
       </label>
       <div className="relative group">

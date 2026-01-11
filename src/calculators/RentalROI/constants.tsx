@@ -4,7 +4,7 @@ import type { Assumptions, CurrencyConfig, CurrencyCode } from './types';
 // Empty state for reset - all zeros
 export const EMPTY_ASSUMPTIONS: Assumptions = {
   initialInvestment: 0,
-  baseYear: new Date().getFullYear(),
+  baseYear: 0,
   keys: 1,
 
   y1Occupancy: 0,

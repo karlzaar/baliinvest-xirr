@@ -134,15 +134,15 @@ const ProjectionsTable: React.FC<Props> = ({ data, avg, currency }) => {
           </colgroup>
           <thead>
             <tr className="border-b border-slate-200">
-              <th className="p-4 font-bold text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-[20] border-r border-slate-100">
+              <th className="p-4 font-bold text-slate-700 uppercase tracking-widest sticky left-0 bg-white z-[20] border-r border-slate-100">
                 Line Item Detail
               </th>
               {data.map(y => (
-                <th key={y.year} className="p-4 font-bold text-center text-slate-500 border-b border-slate-100">
+                <th key={y.year} className="p-4 font-bold text-center text-slate-600 border-b border-slate-100">
                   {y.calendarYear}
                 </th>
               ))}
-              <th className="p-4 font-bold text-center text-slate-400 bg-slate-50/50 border-b border-slate-100 sticky right-0 z-[10] border-l border-slate-200">
+              <th className="p-4 font-bold text-center text-slate-600 bg-slate-50/50 border-b border-slate-100 sticky right-0 z-[10] border-l border-slate-200">
                 Average
               </th>
             </tr>
