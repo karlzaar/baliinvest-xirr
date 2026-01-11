@@ -1,11 +1,50 @@
 
 import type { Assumptions, CurrencyConfig, CurrencyCode } from './types';
 
-export const INITIAL_ASSUMPTIONS: Assumptions = {
-  initialInvestment: 2375000000, 
+// Empty state for reset - all zeros
+export const EMPTY_ASSUMPTIONS: Assumptions = {
+  initialInvestment: 0,
+  baseYear: new Date().getFullYear(),
+  keys: 1,
+
+  y1Occupancy: 0,
+  y1ADR: 0,
+  y1FB: 0,
+  y1Spa: 0,
+  y1OODs: 0,
+  y1Misc: 0,
+
+  occupancyIncreases: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  adrGrowth: 0,
+  fbGrowth: 0,
+  spaGrowth: 0,
+  camGrowth: 0,
+  baseFeeGrowth: 0,
+  techFeeGrowth: 0,
+
+  roomsCostPct: 0,
+  fbCostPct: 0,
+  spaCostPct: 0,
+  otherCostPct: 0,
+  miscCostPct: 0,
+  utilitiesPct: 0,
+
+  adminPct: 0,
+  salesPct: 0,
+  maintPct: 0,
+
+  y1CAM: 0,
+  y1BaseFee: 0,
+  y1TechFee: 0,
+  incentiveFeePct: 0
+};
+
+// Example values shown as placeholders
+export const PLACEHOLDER_VALUES: Assumptions = {
+  initialInvestment: 2375000000,
   baseYear: 2026,
   keys: 1,
-  
+
   y1Occupancy: 70,
   y1ADR: 1600000,
   y1FB: 12000000,
@@ -32,11 +71,14 @@ export const INITIAL_ASSUMPTIONS: Assumptions = {
   salesPct: 5,
   maintPct: 3,
 
-  y1CAM: 15000000,       // 1.25M * 12
-  y1BaseFee: 12000000,   // 1M * 12
-  y1TechFee: 12000000,   // 1M * 12
+  y1CAM: 15000000,
+  y1BaseFee: 12000000,
+  y1TechFee: 12000000,
   incentiveFeePct: 0
 };
+
+// Initial state - use empty for fresh start (like XIRR)
+export const INITIAL_ASSUMPTIONS = EMPTY_ASSUMPTIONS;
 
 export const CURRENCIES: Record<CurrencyCode, CurrencyConfig> = {
   IDR: { code: 'IDR', symbol: 'Rp', locale: 'id-ID', rate: 1 },

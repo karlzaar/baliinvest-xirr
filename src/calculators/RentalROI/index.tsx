@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { INITIAL_ASSUMPTIONS, CURRENCIES } from './constants';
+import { INITIAL_ASSUMPTIONS, EMPTY_ASSUMPTIONS, CURRENCIES } from './constants';
 import type { CurrencyCode, User, Assumptions } from './types';
 import { calculateProjections, calculateAverage } from './utils/calculations';
 import DashboardHeader from './components/DashboardHeader';
@@ -62,7 +62,7 @@ export function RentalROICalculator() {
   }, [assumptions]);
 
   const handleReset = useCallback(() => {
-    setAssumptions(INITIAL_ASSUMPTIONS);
+    setAssumptions(EMPTY_ASSUMPTIONS);
     localStorage.removeItem(DRAFT_STORAGE_KEY);
   }, []);
 
