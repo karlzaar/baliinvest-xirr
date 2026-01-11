@@ -113,10 +113,9 @@ export function RentalROICalculator() {
           </div>
         </header>
 
-        <DashboardHeader data={data} currency={currency} />
-
-        <div className="space-y-6">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Content - Left Side */}
+          <div className="lg:col-span-9 space-y-6">
             <TopInputsPanel assumptions={assumptions} onChange={setAssumptions} currency={currency} />
 
             <ProjectionsTable data={data} avg={averages} currency={currency} />
@@ -143,6 +142,11 @@ export function RentalROICalculator() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Sticky Sidebar - Right Side */}
+          <div className="lg:col-span-3">
+            <DashboardHeader data={data} currency={currency} />
           </div>
         </div>
       </div>
