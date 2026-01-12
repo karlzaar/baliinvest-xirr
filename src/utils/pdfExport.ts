@@ -650,14 +650,27 @@ export function generatePDFReport(options: PDFExportOptions): void {
   });
 
   inflows.forEach(cf => {
-    const displayAmount = toDisplay(cf.amount);
-    runningNetFlow += displayAmount;
+    // Show gross sale price as inflow
+    const grossSaleDisplay = toDisplay(data.exit.projectedSalesPrice);
+    runningNetFlow += grossSaleDisplay;
 
     rows.push({
       date: cf.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      event: 'Exit/Sale',
-      inflow: `${symbol} ${displayAmount.toLocaleString()}`,
+      event: 'Total Sale Price',
+      inflow: `${symbol} ${grossSaleDisplay.toLocaleString()}`,
       outflow: '-',
+      netFlow: runningNetFlow,
+    });
+
+    // Show closing costs as outflow
+    const closingCostsDisplay = toDisplay(closingCosts);
+    runningNetFlow -= closingCostsDisplay;
+
+    rows.push({
+      date: cf.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      event: 'Closing Costs',
+      inflow: '-',
+      outflow: `${symbol} ${closingCostsDisplay.toLocaleString()}`,
       netFlow: runningNetFlow,
     });
   });
