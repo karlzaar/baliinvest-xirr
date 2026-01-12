@@ -129,11 +129,9 @@ export function XIRRCalculator() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-text-primary tracking-tight">XIRR Calculator</h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-text-muted font-medium text-xs">Investment Return Analysis</span>
-                <span className="text-border">|</span>
-                <span className="text-text-muted font-medium text-xs">Irregular Cash Flows</span>
-              </div>
+              <p className="text-text-muted text-xs mt-1 max-w-md">
+                Calculate your real estate investment returns based on purchase price, payment schedule, and projected sale price
+              </p>
             </div>
           </div>
 
