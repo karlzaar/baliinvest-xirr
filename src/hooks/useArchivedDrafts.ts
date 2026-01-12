@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface ArchivedDraft<T> {
   id: string;
@@ -11,23 +11,25 @@ export interface ArchivedDraft<T> {
 
 const STORAGE_KEY = 'baliinvest_archived_drafts';
 
-export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
-  const [drafts, setDrafts] = useState<ArchivedDraft<T>[]>([]);
-
-  // Load drafts from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const allDrafts: ArchivedDraft<T>[] = JSON.parse(saved);
-        // Filter drafts for this calculator type
-        const filtered = allDrafts.filter(d => d.calculatorType === calculatorType);
-        setDrafts(filtered);
-      }
-    } catch (e) {
-      console.error('Failed to load archived drafts:', e);
+// Load drafts from localStorage synchronously
+function loadDraftsFromStorage<T>(calculatorType: 'xirr' | 'rental-roi'): ArchivedDraft<T>[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const allDrafts: ArchivedDraft<T>[] = JSON.parse(saved);
+      return allDrafts.filter(d => d.calculatorType === calculatorType);
     }
-  }, [calculatorType]);
+  } catch (e) {
+    console.error('Failed to load archived drafts:', e);
+  }
+  return [];
+}
+
+export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
+  // Initialize state synchronously from localStorage to prevent race conditions
+  const [drafts, setDrafts] = useState<ArchivedDraft<T>[]>(() =>
+    loadDraftsFromStorage<T>(calculatorType)
+  );
 
   // Save all drafts to localStorage
   const persistDrafts = useCallback((newDrafts: ArchivedDraft<T>[]) => {
