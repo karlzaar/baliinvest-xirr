@@ -6,7 +6,7 @@ interface Props {
   displayExitPrice: number;
   symbol: string;
   handoverDate: string;
-  propertySize: number;
+  propertySize?: number;
   displayToIdr: (display: number) => number;
   idrToDisplay: (idr: number) => number;
   onUpdate: <K extends keyof ExitStrategyData>(key: K, value: ExitStrategyData[K]) => void;
@@ -19,7 +19,6 @@ export function ExitStrategySection({
   displayExitPrice,
   symbol,
   handoverDate,
-  propertySize,
   displayToIdr,
   idrToDisplay,
   onUpdate,
@@ -42,20 +41,10 @@ export function ExitStrategySection({
     return num.toLocaleString('en-US');
   };
 
-  // Format large numbers with abbreviations
-  const formatCompact = (num: number): string => {
-    const absNum = Math.abs(num);
-    if (absNum >= 1e12) return (num / 1e12).toFixed(1) + 'T';
-    if (absNum >= 1e9) return (num / 1e9).toFixed(1) + 'B';
-    if (absNum >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-    if (absNum >= 1e3) return (num / 1e3).toFixed(0) + 'K';
-    return formatNumber(num);
-  };
-
   // Format appreciation with reasonable display
   const formatAppreciation = (): string => {
     if (appreciation >= 1000) {
-      return `+${formatCompact(appreciation)}`;
+      return `+${(appreciation / 1000).toFixed(0)}K%`;
     }
     return `+${appreciation.toFixed(1)}%`;
   };
@@ -185,46 +174,6 @@ export function ExitStrategySection({
             </button>
           );
         })}
-      </div>
-
-      {/* Summary Cards */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-lg bg-surface-alt border border-border overflow-hidden">
-          <span className="text-xs text-text-muted">Gross Sale Price</span>
-          <div className="text-lg font-mono text-accent font-bold mt-1 truncate" title={`${symbol} ${formatNumber(idrToDisplay(data.projectedSalesPrice))}`}>
-            {symbol} {formatCompact(idrToDisplay(data.projectedSalesPrice))}
-          </div>
-        </div>
-
-        <div className="p-4 rounded-lg bg-surface-alt border border-border overflow-hidden">
-          <span className="text-xs text-text-muted">Closing Costs</span>
-          <div className="text-lg font-mono text-text-primary font-bold mt-1 truncate" title={`${symbol} ${formatNumber(closingCostDisplay)}`}>
-            {symbol} {formatCompact(closingCostDisplay)}
-          </div>
-          <span className="text-xs text-text-muted">{data.closingCostPercent}% Total Expenses</span>
-        </div>
-
-        <div className="p-4 rounded-lg bg-surface-alt border border-border overflow-hidden">
-          <span className="text-xs text-text-muted">New Price / sqm</span>
-          <div className="text-lg font-mono text-primary font-bold mt-1 truncate" title={propertySize > 0 ? `${symbol} ${formatNumber(idrToDisplay(data.projectedSalesPrice / propertySize))}` : undefined}>
-            {propertySize > 0
-              ? `${symbol} ${formatCompact(idrToDisplay(data.projectedSalesPrice / propertySize))}`
-              : 'Set property size'}
-          </div>
-          {propertySize > 0 && (
-            <span className="text-xs text-text-muted">per square meter</span>
-          )}
-        </div>
-      </div>
-
-      {/* Net Proceeds */}
-      <div className="mt-4 p-4 rounded-lg bg-accent-light border border-accent/20 overflow-hidden">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium text-accent flex-shrink-0">Net Proceeds from Sale</span>
-          <span className="text-xl font-mono font-bold text-accent truncate" title={`${symbol} ${formatNumber(idrToDisplay(data.projectedSalesPrice - closingCostIDR))}`}>
-            {symbol} {formatCompact(idrToDisplay(data.projectedSalesPrice - closingCostIDR))}
-          </span>
-        </div>
       </div>
     </section>
   );
