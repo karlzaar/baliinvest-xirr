@@ -21,9 +21,11 @@ export function Footer({ onSelectCalculator }: FooterProps) {
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">ROI</span>
-              </div>
+              <img
+                src="/logo.png"
+                alt="BaliInvest Logo"
+                className="w-12 h-12 rounded-xl object-cover"
+              />
               <div>
                 <h3 className="text-white font-bold text-lg">BaliInvest</h3>
                 <p className="text-xs text-primary">Property Investment Tools</p>

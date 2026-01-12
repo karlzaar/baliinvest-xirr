@@ -205,7 +205,7 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setFont('helvetica', 'normal');
   doc.text(`Base Currency: ${currency}`, pageWidth - margin, yPos + 10, { align: 'right' });
 
-  yPos += 14;
+  yPos += 18;
 
   // Project name (large)
   doc.setTextColor(...COLORS.textDark);
