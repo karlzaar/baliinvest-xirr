@@ -288,31 +288,43 @@ export function PaymentTerms({
 
       {/* Booking Fee Section */}
       <div className="mt-8 pt-6 border-t border-border">
-        <label className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-lg">receipt_long</span>
-            <span className="text-sm font-medium text-text-secondary">Booking Fee (Optional)</span>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="material-symbols-outlined text-primary text-lg">receipt_long</span>
+          <span className="text-sm font-medium text-text-secondary">Booking Fee (Optional)</span>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-text-muted">Amount</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-mono">
+                {symbol}
+              </span>
+              <input
+                type="text"
+                value={idrToDisplay(data.bookingFee) > 0 ? formatNumber(idrToDisplay(data.bookingFee)) : ''}
+                onChange={(e) => {
+                  const displayValue = parseAmountInput(e.target.value);
+                  const idrValue = displayToIdr(displayValue);
+                  onUpdate('bookingFee', idrValue);
+                }}
+                placeholder="0"
+                className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 pl-12 text-text-primary font-mono placeholder:text-text-muted focus:border-primary focus:outline-none"
+              />
+            </div>
           </div>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-mono">
-              {symbol}
-            </span>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-text-muted">Date</label>
             <input
-              type="text"
-              value={idrToDisplay(data.bookingFee) > 0 ? formatNumber(idrToDisplay(data.bookingFee)) : ''}
-              onChange={(e) => {
-                const displayValue = parseAmountInput(e.target.value);
-                const idrValue = displayToIdr(displayValue);
-                onUpdate('bookingFee', idrValue);
-              }}
-              placeholder="0"
-              className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 pl-12 text-text-primary font-mono placeholder:text-text-muted focus:border-primary focus:outline-none"
+              type="date"
+              value={data.bookingFeeDate || ''}
+              onChange={(e) => onUpdate('bookingFeeDate', e.target.value)}
+              className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 text-text-primary focus:border-primary focus:outline-none"
             />
           </div>
-          <p className="text-xs text-text-muted">
-            Initial fee paid to secure the property. Usually refundable or deducted from total price.
-          </p>
-        </label>
+        </div>
+        <p className="text-xs text-text-muted mt-2">
+          Initial fee paid to secure the property. Usually refundable or deducted from total price.
+        </p>
       </div>
     </section>
   );

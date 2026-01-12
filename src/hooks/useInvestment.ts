@@ -21,7 +21,8 @@ const DEFAULT_INVESTMENT: InvestmentData = {
     downPaymentPercent: 50,
     installmentMonths: 6,
     schedule: [],
-    bookingFee: 0
+    bookingFee: 0,
+    bookingFeeDate: ''
   },
   exit: {
     strategyType: 'flip',

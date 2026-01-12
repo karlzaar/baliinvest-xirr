@@ -20,6 +20,7 @@ export interface PaymentTerms {
   installmentMonths: number;
   schedule: PaymentScheduleEntry[];  // Individual payment entries
   bookingFee: number;  // Initial booking fee in IDR (paid upfront, separate from down payment)
+  bookingFeeDate: string;  // Date when booking fee is paid
 }
 
 export type ExitStrategyType = 'flip' | 'rent-resell' | 'milk-cow';
