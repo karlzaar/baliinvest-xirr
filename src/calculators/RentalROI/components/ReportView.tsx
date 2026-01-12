@@ -5,6 +5,7 @@ import ProjectionsTable from './ProjectionsTable';
 import AISummary from './AISummary';
 import DashboardHeader from './DashboardHeader';
 import AuthModal from './AuthModal';
+import { generateRentalROIPDF } from '../utils/pdfExport';
 
 interface Props {
   data: YearlyData[];
@@ -18,21 +19,38 @@ interface Props {
 
 const ReportView: React.FC<Props> = ({ data, averages, assumptions, currency, user, onLogin, onBack }) => {
   const [showAuth, setShowAuth] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportPDF = () => {
+    setIsExporting(true);
+    try {
+      generateRentalROIPDF({
+        data,
+        assumptions,
+        currency,
+        projectName: `${assumptions.keys}-Key Property`,
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+    } finally {
+      setTimeout(() => setIsExporting(false), 500);
+    }
+  };
 
   const handleDownload = () => {
     if (!user) {
       setShowAuth(true);
     } else {
-      window.print();
+      exportPDF();
     }
   };
 
   const handleAuthSuccess = (u: User) => {
     onLogin(u);
     setShowAuth(false);
-    // Automatically trigger print after auth success
+    // Automatically trigger PDF export after auth success
     setTimeout(() => {
-      window.print();
+      exportPDF();
     }, 500);
   };
 
@@ -56,11 +74,22 @@ const ReportView: React.FC<Props> = ({ data, averages, assumptions, currency, us
           Back to Dashboard
         </button>
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={handleDownload}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+            disabled={isExporting}
+            className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Download PDF Report
+            {isExporting ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Exporting...</span>
+              </>
+            ) : (
+              <span>Download PDF Report</span>
+            )}
           </button>
         </div>
       </nav>

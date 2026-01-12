@@ -1,0 +1,768 @@
+import jsPDF from 'jspdf';
+import type { YearlyData, Assumptions, CurrencyConfig } from '../types';
+import { formatCurrency } from '../constants';
+
+interface PDFExportOptions {
+  data: YearlyData[];
+  assumptions: Assumptions;
+  currency: CurrencyConfig;
+  projectName?: string;
+}
+
+// Colors
+const COLORS = {
+  white: [255, 255, 255] as [number, number, number],
+  background: [248, 250, 252] as [number, number, number],
+  cardBg: [255, 255, 255] as [number, number, number],
+  border: [226, 232, 240] as [number, number, number],
+  borderLight: [241, 245, 249] as [number, number, number],
+
+  textDark: [15, 23, 42] as [number, number, number],
+  textMedium: [71, 85, 105] as [number, number, number],
+  textLight: [148, 163, 184] as [number, number, number],
+
+  primary: [99, 102, 241] as [number, number, number],
+  primaryDark: [79, 70, 229] as [number, number, number],
+  primaryLight: [224, 231, 255] as [number, number, number],
+
+  accent: [16, 185, 129] as [number, number, number],
+  accentLight: [209, 250, 229] as [number, number, number],
+
+  warning: [245, 158, 11] as [number, number, number],
+  warningLight: [254, 243, 199] as [number, number, number],
+
+  negative: [239, 68, 68] as [number, number, number],
+  negativeLight: [254, 226, 226] as [number, number, number],
+
+  blue: [59, 130, 246] as [number, number, number],
+  blueLight: [219, 234, 254] as [number, number, number],
+};
+
+// Font sizes
+const FONT = {
+  xs: 6,
+  sm: 7,
+  base: 8,
+  md: 9,
+  lg: 11,
+  xl: 14,
+  xxl: 18,
+  xxxl: 24,
+};
+
+// Analysis generator
+function generateAnalysis(data: YearlyData[], assumptions: Assumptions, _currency: CurrencyConfig) {
+  const avgNetYield = data.reduce((s, i) => s + i.roiAfterManagement, 0) / data.length;
+  const totalProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0);
+  const avgGopMargin = data.reduce((s, i) => s + i.gopMargin, 0) / data.length;
+  const initialInvestment = assumptions.initialInvestment;
+  const paybackYears = totalProfit > 0 ? initialInvestment / (totalProfit / 10) : 99;
+
+  let score = 50;
+  if (avgNetYield > 10) score += 20;
+  else if (avgNetYield > 7) score += 10;
+  else if (avgNetYield < 5) score -= 10;
+
+  if (avgGopMargin > 50) score += 15;
+  else if (avgGopMargin > 40) score += 10;
+  else if (avgGopMargin < 30) score -= 10;
+
+  if (paybackYears < 8) score += 10;
+  else if (paybackYears > 12) score -= 10;
+
+  score = Math.max(0, Math.min(100, score));
+
+  const pros: string[] = [];
+  const cons: string[] = [];
+
+  if (avgNetYield > 8) pros.push(`Strong average net yield of ${avgNetYield.toFixed(1)}% p.a.`);
+  else if (avgNetYield < 5) cons.push(`Below-average net yield of ${avgNetYield.toFixed(1)}% p.a.`);
+
+  if (avgGopMargin > 45) pros.push(`Healthy GOP margin of ${avgGopMargin.toFixed(1)}%`);
+  else if (avgGopMargin < 35) cons.push(`GOP margin of ${avgGopMargin.toFixed(1)}% needs improvement`);
+
+  if (assumptions.y1Occupancy >= 70) pros.push(`Starting occupancy of ${assumptions.y1Occupancy}%`);
+  else cons.push(`Initial occupancy of ${assumptions.y1Occupancy}% may need marketing`);
+
+  if (paybackYears < 10) pros.push(`Payback within ${paybackYears.toFixed(1)} years`);
+  else cons.push(`Extended payback of ${paybackYears.toFixed(1)} years`);
+
+  if (pros.length < 2) pros.push('Diversified revenue streams');
+  if (cons.length < 2) cons.push('Subject to market conditions');
+
+  let verdict = '';
+  let rating = '';
+  if (score >= 75) { verdict = 'Excellent investment opportunity'; rating = 'A'; }
+  else if (score >= 60) { verdict = 'Solid investment with good returns'; rating = 'B+'; }
+  else if (score >= 45) { verdict = 'Moderate opportunity, review assumptions'; rating = 'B-'; }
+  else { verdict = 'Exercise caution, high risk profile'; rating = 'C'; }
+
+  return { score, pros, cons, verdict, rating, avgNetYield, totalProfit, avgGopMargin, paybackYears };
+}
+
+export function generateRentalROIPDF(options: PDFExportOptions): void {
+  const { data, assumptions, currency, projectName } = options;
+
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  const margin = 12;
+  const contentWidth = pageWidth - margin * 2;
+
+  // Calculate metrics
+  const analysis = generateAnalysis(data, assumptions, currency);
+  const totalRevenue = data.reduce((s, i) => s + i.totalRevenue, 0);
+  const avgProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0) / data.length;
+  const y1Data = data[0];
+  const y10Data = data[9];
+
+  let yPos = margin;
+  let currentPage = 1;
+
+  const drawPageBackground = () => {
+    doc.setFillColor(...COLORS.background);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+  };
+
+  const drawFooter = (pageNum: number, total: number) => {
+    const footerY = pageHeight - 8;
+    doc.setDrawColor(...COLORS.border);
+    doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Generated by BaliInvest Property Investment Tools', margin, footerY);
+    doc.text(`Page ${pageNum} of ${total}`, pageWidth / 2, footerY, { align: 'center' });
+    doc.text(new Date().toLocaleDateString(), pageWidth - margin, footerY, { align: 'right' });
+  };
+
+  const addNewPage = () => {
+    doc.addPage();
+    currentPage++;
+    drawPageBackground();
+    yPos = margin;
+  };
+
+  // ========================================
+  // PAGE 1: Cover & Executive Summary
+  // ========================================
+  drawPageBackground();
+
+  // Header with logo
+  const logoSize = 14;
+  doc.setFillColor(...COLORS.primary);
+  doc.roundedRect(margin, yPos, logoSize, logoSize, 2, 2, 'F');
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ROI', margin + logoSize / 2, yPos + 9, { align: 'center' });
+
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.xl);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BaliInvest', margin + logoSize + 4, yPos + 6);
+  doc.setTextColor(...COLORS.primary);
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Property Investment Tools', margin + logoSize + 4, yPos + 11);
+
+  // Date
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFontSize(FONT.xs);
+  doc.text('GENERATED', pageWidth - margin, yPos + 4, { align: 'right' });
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), pageWidth - margin, yPos + 9, { align: 'right' });
+
+  yPos += 22;
+
+  // Title section
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INVESTMENT ANALYSIS REPORT', margin, yPos);
+  yPos += 6;
+
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.xxxl);
+  doc.setFont('helvetica', 'bold');
+  doc.text(projectName || '10-Year Rental ROI', margin, yPos);
+  yPos += 6;
+
+  doc.setTextColor(...COLORS.textMedium);
+  doc.setFontSize(FONT.base);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${assumptions.keys}-Key Property  |  ${formatCurrency(assumptions.initialInvestment, currency)} Investment  |  10-Year Projections`, margin, yPos);
+  yPos += 10;
+
+  // Divider
+  doc.setDrawColor(...COLORS.primary);
+  doc.setLineWidth(1);
+  doc.line(margin, yPos, margin + 50, yPos);
+  yPos += 8;
+
+  // Deal Score Card
+  const scoreCardWidth = 55;
+  const scoreCardHeight = 55;
+  doc.setFillColor(...COLORS.textDark);
+  doc.roundedRect(margin, yPos, scoreCardWidth, scoreCardHeight, 4, 4, 'F');
+
+  // Score circle
+  const centerX = margin + scoreCardWidth / 2;
+  const centerY = yPos + 25;
+  const radius = 18;
+
+  doc.setDrawColor(50, 50, 70);
+  doc.setLineWidth(3);
+  doc.circle(centerX, centerY, radius, 'S');
+
+  doc.setDrawColor(...COLORS.primary);
+  doc.setLineWidth(3);
+  // Draw arc based on score
+  const startAngle = -90;
+  const endAngle = startAngle + (analysis.score / 100) * 360;
+  for (let i = startAngle; i < endAngle; i += 5) {
+    const rad1 = (i * Math.PI) / 180;
+    const rad2 = ((i + 5) * Math.PI) / 180;
+    const x1 = centerX + radius * Math.cos(rad1);
+    const y1 = centerY + radius * Math.sin(rad1);
+    const x2 = centerX + radius * Math.cos(rad2);
+    const y2 = centerY + radius * Math.sin(rad2);
+    doc.line(x1, y1, x2, y2);
+  }
+
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(FONT.xxl);
+  doc.setFont('helvetica', 'bold');
+  doc.text(analysis.score.toString(), centerX, centerY + 2, { align: 'center' });
+  doc.setFontSize(FONT.xs);
+  doc.text('DEAL SCORE', centerX, centerY + 8, { align: 'center' });
+
+  doc.setFontSize(FONT.sm);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(analysis.rating, centerX, yPos + scoreCardHeight - 6, { align: 'center' });
+
+  // Verdict box
+  const verdictX = margin + scoreCardWidth + 6;
+  const verdictWidth = contentWidth - scoreCardWidth - 6;
+  doc.setFillColor(...COLORS.cardBg);
+  doc.roundedRect(verdictX, yPos, verdictWidth, scoreCardHeight, 4, 4, 'F');
+  doc.setDrawColor(...COLORS.border);
+  doc.roundedRect(verdictX, yPos, verdictWidth, scoreCardHeight, 4, 4, 'S');
+
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INVESTMENT VERDICT', verdictX + 6, yPos + 8);
+
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.lg);
+  doc.setFont('helvetica', 'bold');
+  doc.text(analysis.verdict, verdictX + 6, yPos + 16);
+
+  // Key stats in verdict box
+  const statsY = yPos + 24;
+  const statWidth = (verdictWidth - 18) / 4;
+
+  const statsData = [
+    { label: 'Net Yield', value: `${analysis.avgNetYield.toFixed(1)}%`, color: COLORS.accent },
+    { label: 'GOP Margin', value: `${analysis.avgGopMargin.toFixed(1)}%`, color: COLORS.primary },
+    { label: 'Payback', value: `${analysis.paybackYears.toFixed(1)}Y`, color: COLORS.blue },
+    { label: 'Total Profit', value: formatCurrency(analysis.totalProfit, currency).replace(/,/g, ' '), color: COLORS.accent },
+  ];
+
+  statsData.forEach((stat, i) => {
+    const statX = verdictX + 6 + i * statWidth;
+    doc.setFillColor(...COLORS.background);
+    doc.roundedRect(statX, statsY, statWidth - 3, 22, 2, 2, 'F');
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'normal');
+    doc.text(stat.label, statX + (statWidth - 3) / 2, statsY + 6, { align: 'center' });
+    doc.setTextColor(...stat.color);
+    doc.setFontSize(FONT.md);
+    doc.setFont('helvetica', 'bold');
+    doc.text(stat.value, statX + (statWidth - 3) / 2, statsY + 14, { align: 'center' });
+  });
+
+  yPos += scoreCardHeight + 8;
+
+  // Key Metrics Row
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Key Performance Indicators', margin, yPos);
+  yPos += 6;
+
+  const metricsHeight = 28;
+  const metricWidth = (contentWidth - 12) / 4;
+  doc.setFillColor(...COLORS.cardBg);
+  doc.roundedRect(margin, yPos, contentWidth, metricsHeight, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.border);
+  doc.roundedRect(margin, yPos, contentWidth, metricsHeight, 3, 3, 'S');
+
+  const metrics = [
+    { label: 'AVG ANNUAL CASH FLOW', value: formatCurrency(avgProfit, currency), color: COLORS.accent },
+    { label: 'ANNUALIZED NET ROI', value: `${analysis.avgNetYield.toFixed(2)}%`, color: COLORS.primary },
+    { label: '10Y TOTAL PROFIT', value: formatCurrency(analysis.totalProfit, currency), color: COLORS.blue },
+    { label: '10Y GROSS REVENUE', value: formatCurrency(totalRevenue, currency), color: COLORS.textDark },
+  ];
+
+  metrics.forEach((metric, i) => {
+    const mx = margin + 4 + i * metricWidth;
+    if (i > 0) {
+      doc.setDrawColor(...COLORS.borderLight);
+      doc.line(mx - 2, yPos + 4, mx - 2, yPos + metricsHeight - 4);
+    }
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'normal');
+    doc.text(metric.label, mx, yPos + 8);
+    doc.setTextColor(...metric.color);
+    doc.setFontSize(FONT.lg);
+    doc.setFont('helvetica', 'bold');
+    doc.text(metric.value, mx, yPos + 18);
+  });
+
+  yPos += metricsHeight + 8;
+
+  // Pros and Cons
+  const halfWidth = (contentWidth - 4) / 2;
+
+  // Pros
+  doc.setFillColor(...COLORS.accentLight);
+  doc.roundedRect(margin, yPos, halfWidth, 36, 3, 3, 'F');
+  doc.setTextColor(...COLORS.accent);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+  doc.text('KEY STRENGTHS', margin + 6, yPos + 8);
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'normal');
+  analysis.pros.slice(0, 3).forEach((pro, i) => {
+    doc.text(`• ${pro.substring(0, 45)}${pro.length > 45 ? '...' : ''}`, margin + 6, yPos + 16 + i * 6);
+  });
+
+  // Cons
+  doc.setFillColor(...COLORS.warningLight);
+  doc.roundedRect(margin + halfWidth + 4, yPos, halfWidth, 36, 3, 3, 'F');
+  doc.setTextColor(...COLORS.warning);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RISK FACTORS', margin + halfWidth + 10, yPos + 8);
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'normal');
+  analysis.cons.slice(0, 3).forEach((con, i) => {
+    doc.text(`• ${con.substring(0, 45)}${con.length > 45 ? '...' : ''}`, margin + halfWidth + 10, yPos + 16 + i * 6);
+  });
+
+  yPos += 44;
+
+  // Investment Assumptions Summary
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Investment Parameters', margin, yPos);
+  yPos += 6;
+
+  doc.setFillColor(...COLORS.cardBg);
+  doc.roundedRect(margin, yPos, contentWidth, 34, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.border);
+  doc.roundedRect(margin, yPos, contentWidth, 34, 3, 3, 'S');
+
+  const params = [
+    ['Initial Investment', formatCurrency(assumptions.initialInvestment, currency)],
+    ['Property Keys', assumptions.keys.toString()],
+    ['Year 1 Occupancy', `${assumptions.y1Occupancy}%`],
+    ['Year 1 ADR', formatCurrency(assumptions.y1ADR, currency)],
+    ['ADR Growth', `${assumptions.adrGrowth}%`],
+    ['Base Year', assumptions.baseYear.toString()],
+  ];
+
+  const paramColWidth = contentWidth / 3;
+  params.forEach((param, i) => {
+    const row = Math.floor(i / 3);
+    const col = i % 3;
+    const px = margin + 6 + col * paramColWidth;
+    const py = yPos + 8 + row * 14;
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'normal');
+    doc.text(param[0], px, py);
+    doc.setTextColor(...COLORS.textDark);
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'bold');
+    doc.text(param[1], px, py + 6);
+  });
+
+  yPos += 42;
+
+  // Year-over-Year Growth Preview
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Performance Trajectory', margin, yPos);
+  yPos += 6;
+
+  doc.setFillColor(...COLORS.cardBg);
+  doc.roundedRect(margin, yPos, contentWidth, 28, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.border);
+  doc.roundedRect(margin, yPos, contentWidth, 28, 3, 3, 'S');
+
+  // Y1 vs Y10 comparison
+  const compItems = [
+    { label: 'Revenue', y1: y1Data.totalRevenue, y10: y10Data.totalRevenue },
+    { label: 'GOP', y1: y1Data.gop, y10: y10Data.gop },
+    { label: 'Net Profit', y1: y1Data.takeHomeProfit, y10: y10Data.takeHomeProfit },
+  ];
+
+  const compWidth = (contentWidth - 12) / 3;
+  compItems.forEach((item, i) => {
+    const cx = margin + 6 + i * compWidth;
+    const growth = item.y1 > 0 ? ((item.y10 - item.y1) / item.y1 * 100) : 0;
+
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.label.toUpperCase(), cx, yPos + 7);
+
+    doc.setTextColor(...COLORS.textMedium);
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Y1: ${formatCurrency(item.y1, currency)}`, cx, yPos + 14);
+    doc.text(`Y10: ${formatCurrency(item.y10, currency)}`, cx, yPos + 20);
+
+    doc.setTextColor(growth >= 0 ? COLORS.accent[0] : COLORS.negative[0], growth >= 0 ? COLORS.accent[1] : COLORS.negative[1], growth >= 0 ? COLORS.accent[2] : COLORS.negative[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${growth >= 0 ? '+' : ''}${growth.toFixed(0)}%`, cx + compWidth - 20, yPos + 14);
+  });
+
+  drawFooter(1, 3);
+
+  // ========================================
+  // PAGE 2: Detailed 10-Year Projections
+  // ========================================
+  addNewPage();
+
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.lg);
+  doc.setFont('helvetica', 'bold');
+  doc.text('10-Year Financial Projections', margin, yPos + 6);
+  yPos += 14;
+
+  // Projections table
+  const tableHeaders = ['Year', 'Revenue', 'Expenses', 'GOP', 'Mgmt Fees', 'Net Profit', 'ROI %'];
+  const colWidths = [16, 30, 28, 28, 26, 30, 18];
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+  const rowHeight = 7;
+
+  // Table header
+  doc.setFillColor(...COLORS.textDark);
+  doc.rect(margin, yPos, tableWidth, rowHeight + 1, 'F');
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+
+  let headerX = margin + 3;
+  tableHeaders.forEach((header, i) => {
+    doc.text(header, headerX, yPos + 5);
+    headerX += colWidths[i];
+  });
+  yPos += rowHeight + 1;
+
+  // Table rows
+  data.forEach((row, i) => {
+    const isEven = i % 2 === 0;
+    doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
+    doc.rect(margin, yPos, tableWidth, rowHeight, 'F');
+
+    let cellX = margin + 3;
+    doc.setTextColor(...COLORS.textDark);
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'normal');
+
+    // Year
+    doc.text(`Y${row.year}`, cellX, yPos + 5);
+    cellX += colWidths[0];
+
+    // Revenue
+    doc.text(formatCurrency(row.totalRevenue, currency), cellX, yPos + 5);
+    cellX += colWidths[1];
+
+    // Expenses
+    const totalExpenses = row.totalOperatingCost + row.totalUndistributedCost;
+    doc.text(formatCurrency(totalExpenses, currency), cellX, yPos + 5);
+    cellX += colWidths[2];
+
+    // GOP
+    doc.setTextColor(...COLORS.primary);
+    doc.text(formatCurrency(row.gop, currency), cellX, yPos + 5);
+    cellX += colWidths[3];
+
+    // Management Fees
+    doc.setTextColor(...COLORS.warning);
+    doc.text(formatCurrency(row.totalManagementFees, currency), cellX, yPos + 5);
+    cellX += colWidths[4];
+
+    // Net Profit
+    doc.setTextColor(row.takeHomeProfit >= 0 ? COLORS.accent[0] : COLORS.negative[0], row.takeHomeProfit >= 0 ? COLORS.accent[1] : COLORS.negative[1], row.takeHomeProfit >= 0 ? COLORS.accent[2] : COLORS.negative[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatCurrency(row.takeHomeProfit, currency), cellX, yPos + 5);
+    cellX += colWidths[5];
+
+    // ROI
+    doc.setTextColor(...COLORS.textDark);
+    doc.text(`${row.roiAfterManagement.toFixed(1)}%`, cellX, yPos + 5);
+
+    yPos += rowHeight;
+  });
+
+  // Totals row
+  doc.setFillColor(...COLORS.primaryLight);
+  doc.rect(margin, yPos, tableWidth, rowHeight + 1, 'F');
+  doc.setTextColor(...COLORS.primaryDark);
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'bold');
+
+  let totalX = margin + 3;
+  doc.text('TOTAL', totalX, yPos + 5);
+  totalX += colWidths[0];
+  doc.text(formatCurrency(totalRevenue, currency), totalX, yPos + 5);
+  totalX += colWidths[1];
+  const totalExpenses = data.reduce((s, d) => s + d.totalOperatingCost + d.totalUndistributedCost, 0);
+  doc.text(formatCurrency(totalExpenses, currency), totalX, yPos + 5);
+  totalX += colWidths[2];
+  const totalGOP = data.reduce((s, d) => s + d.gop, 0);
+  doc.text(formatCurrency(totalGOP, currency), totalX, yPos + 5);
+  totalX += colWidths[3];
+  const totalMgmt = data.reduce((s, d) => s + d.totalManagementFees, 0);
+  doc.text(formatCurrency(totalMgmt, currency), totalX, yPos + 5);
+  totalX += colWidths[4];
+  doc.setTextColor(...COLORS.accent);
+  doc.text(formatCurrency(analysis.totalProfit, currency), totalX, yPos + 5);
+  totalX += colWidths[5];
+  doc.setTextColor(...COLORS.primaryDark);
+  doc.text(`${analysis.avgNetYield.toFixed(1)}%`, totalX, yPos + 5);
+
+  yPos += rowHeight + 10;
+
+  // Revenue Breakdown Section
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Revenue Stream Analysis (Year 1)', margin, yPos);
+  yPos += 6;
+
+  const revenueStreams = [
+    { name: 'Room Revenue', value: y1Data.revenueRooms, pct: y1Data.revenueRoomsPercent, color: COLORS.primary },
+    { name: 'F&B Revenue', value: y1Data.revenueFB, pct: y1Data.revenueFBPercent, color: COLORS.accent },
+    { name: 'Spa Revenue', value: y1Data.revenueSpa, pct: y1Data.revenueSpaPercent, color: COLORS.blue },
+    { name: 'OODs Revenue', value: y1Data.revenueOODs, pct: y1Data.revenueOODsPercent, color: COLORS.warning },
+    { name: 'Misc Revenue', value: y1Data.revenueMisc, pct: y1Data.revenueMiscPercent, color: COLORS.textMedium },
+  ];
+
+  const barHeight = 10;
+  const barMaxWidth = contentWidth - 80;
+
+  revenueStreams.forEach((stream, i) => {
+    const by = yPos + i * (barHeight + 4);
+
+    doc.setTextColor(...COLORS.textDark);
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'normal');
+    doc.text(stream.name, margin, by + 7);
+
+    const barWidth = (stream.pct / 100) * barMaxWidth;
+    doc.setFillColor(...COLORS.borderLight);
+    doc.roundedRect(margin + 35, by + 2, barMaxWidth, barHeight - 2, 1, 1, 'F');
+    doc.setFillColor(...stream.color);
+    doc.roundedRect(margin + 35, by + 2, Math.max(barWidth, 2), barHeight - 2, 1, 1, 'F');
+
+    doc.setTextColor(...COLORS.textMedium);
+    doc.setFontSize(FONT.xs);
+    doc.text(`${stream.pct.toFixed(1)}%`, margin + 38 + barMaxWidth, by + 7);
+    doc.text(formatCurrency(stream.value, currency), margin + 38 + barMaxWidth + 15, by + 7);
+  });
+
+  yPos += revenueStreams.length * (barHeight + 4) + 10;
+
+  // Cost Structure
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Cost Structure Analysis (Year 1)', margin, yPos);
+  yPos += 6;
+
+  const costItems = [
+    { name: 'Operating Costs', value: y1Data.totalOperatingCost, pct: y1Data.operatingCostPercent },
+    { name: 'Undistributed Costs', value: y1Data.totalUndistributedCost, pct: y1Data.undistributedCostPercent },
+    { name: 'Management Fees', value: y1Data.totalManagementFees, pct: y1Data.managementFeesPercent },
+  ];
+
+  costItems.forEach((cost, i) => {
+    const cy = yPos + i * (barHeight + 4);
+
+    doc.setTextColor(...COLORS.textDark);
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cost.name, margin, cy + 7);
+
+    const barWidth = (cost.pct / 100) * barMaxWidth;
+    doc.setFillColor(...COLORS.borderLight);
+    doc.roundedRect(margin + 40, cy + 2, barMaxWidth - 5, barHeight - 2, 1, 1, 'F');
+    doc.setFillColor(...COLORS.negative);
+    doc.roundedRect(margin + 40, cy + 2, Math.max(barWidth, 2), barHeight - 2, 1, 1, 'F');
+
+    doc.setTextColor(...COLORS.textMedium);
+    doc.setFontSize(FONT.xs);
+    doc.text(`${cost.pct.toFixed(1)}%`, margin + 43 + barMaxWidth - 5, cy + 7);
+    doc.text(formatCurrency(cost.value, currency), margin + 43 + barMaxWidth + 10, cy + 7);
+  });
+
+  drawFooter(2, 3);
+
+  // ========================================
+  // PAGE 3: Detailed Metrics & Analysis
+  // ========================================
+  addNewPage();
+
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.lg);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Detailed Performance Metrics', margin, yPos + 6);
+  yPos += 14;
+
+  // Operational metrics over time
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Occupancy & ADR Progression', margin, yPos);
+  yPos += 6;
+
+  // Occupancy & ADR table
+  const occHeaders = ['Year', 'Occupancy', 'ADR', 'RevPAR', 'GOP Margin', 'Profit Margin'];
+  const occColWidths = [16, 28, 30, 30, 28, 28];
+  const occTableWidth = occColWidths.reduce((a, b) => a + b, 0);
+
+  doc.setFillColor(...COLORS.textDark);
+  doc.rect(margin, yPos, occTableWidth, rowHeight + 1, 'F');
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+
+  let occHeaderX = margin + 3;
+  occHeaders.forEach((header, i) => {
+    doc.text(header, occHeaderX, yPos + 5);
+    occHeaderX += occColWidths[i];
+  });
+  yPos += rowHeight + 1;
+
+  data.forEach((row, i) => {
+    const isEven = i % 2 === 0;
+    doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
+    doc.rect(margin, yPos, occTableWidth, rowHeight, 'F');
+
+    let cellX = margin + 3;
+    doc.setTextColor(...COLORS.textDark);
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'normal');
+
+    doc.text(`Y${row.year}`, cellX, yPos + 5);
+    cellX += occColWidths[0];
+
+    doc.text(`${row.occupancy.toFixed(1)}%`, cellX, yPos + 5);
+    cellX += occColWidths[1];
+
+    doc.text(formatCurrency(row.adr, currency), cellX, yPos + 5);
+    cellX += occColWidths[2];
+
+    doc.text(formatCurrency(row.revpar, currency), cellX, yPos + 5);
+    cellX += occColWidths[3];
+
+    doc.setTextColor(...COLORS.primary);
+    doc.text(`${row.gopMargin.toFixed(1)}%`, cellX, yPos + 5);
+    cellX += occColWidths[4];
+
+    doc.setTextColor(row.profitMargin >= 0 ? COLORS.accent[0] : COLORS.negative[0], row.profitMargin >= 0 ? COLORS.accent[1] : COLORS.negative[1], row.profitMargin >= 0 ? COLORS.accent[2] : COLORS.negative[2]);
+    doc.text(`${row.profitMargin.toFixed(1)}%`, cellX, yPos + 5);
+
+    yPos += rowHeight;
+  });
+
+  yPos += 12;
+
+  // Management Fee Breakdown
+  doc.setTextColor(...COLORS.textDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Management Fee Structure (Year 1)', margin, yPos);
+  yPos += 6;
+
+  doc.setFillColor(...COLORS.cardBg);
+  doc.roundedRect(margin, yPos, contentWidth, 32, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.border);
+  doc.roundedRect(margin, yPos, contentWidth, 32, 3, 3, 'S');
+
+  const feeItems = [
+    { name: 'CAM Fee', value: y1Data.feeCAM, pct: y1Data.feeCAMPercent },
+    { name: 'Base Mgmt Fee', value: y1Data.feeBase, pct: y1Data.feeBasePercent },
+    { name: 'Tech Fee', value: y1Data.feeTech, pct: y1Data.feeTechPercent },
+    { name: 'Incentive Fee', value: y1Data.feeIncentive, pct: y1Data.feeIncentivePercent },
+  ];
+
+  const feeColWidth = (contentWidth - 12) / 4;
+  feeItems.forEach((fee, i) => {
+    const fx = margin + 6 + i * feeColWidth;
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'normal');
+    doc.text(fee.name, fx, yPos + 8);
+    doc.setTextColor(...COLORS.textDark);
+    doc.setFontSize(FONT.md);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatCurrency(fee.value, currency), fx, yPos + 16);
+    doc.setTextColor(...COLORS.textMedium);
+    doc.setFontSize(FONT.xs);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${fee.pct.toFixed(2)}% of revenue`, fx, yPos + 22);
+  });
+
+  yPos += 40;
+
+  // Summary box
+  doc.setFillColor(...COLORS.primaryLight);
+  doc.roundedRect(margin, yPos, contentWidth, 28, 3, 3, 'F');
+
+  doc.setTextColor(...COLORS.primaryDark);
+  doc.setFontSize(FONT.md);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Investment Summary', margin + 6, yPos + 8);
+
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'normal');
+  const summaryText = `This ${assumptions.keys}-key property investment with ${formatCurrency(assumptions.initialInvestment, currency)} initial capital projects ${formatCurrency(analysis.totalProfit, currency)} total profit over 10 years, representing an average annual net yield of ${analysis.avgNetYield.toFixed(2)}%. With a deal score of ${analysis.score}/100, this investment demonstrates ${analysis.score >= 60 ? 'favorable' : 'moderate'} return characteristics.`;
+
+  const splitSummary = doc.splitTextToSize(summaryText, contentWidth - 12);
+  doc.text(splitSummary, margin + 6, yPos + 16);
+
+  yPos += 36;
+
+  // Disclaimer
+  doc.setFillColor(...COLORS.warningLight);
+  doc.roundedRect(margin, yPos, contentWidth, 18, 3, 3, 'F');
+  doc.setTextColor(...COLORS.warning);
+  doc.setFontSize(FONT.xs);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DISCLAIMER', margin + 6, yPos + 6);
+  doc.setTextColor(...COLORS.textMedium);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Projections are estimates based on provided assumptions. Actual results may vary. Consult a financial advisor.', margin + 6, yPos + 12);
+
+  drawFooter(3, 3);
+
+  // Save PDF
+  const fileName = `BaliInvest_ROI_${(projectName || 'Analysis').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
