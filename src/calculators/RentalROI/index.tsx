@@ -8,6 +8,8 @@ import AssumptionsPanel from './components/AssumptionsPanel';
 import ProjectionsTable from './components/ProjectionsTable';
 import ReportView from './components/ReportView';
 import { Toast } from '../../components/ui/Toast';
+import { DraftSelector } from '../../components/ui/DraftSelector';
+import { useArchivedDrafts, type ArchivedDraft } from '../../hooks/useArchivedDrafts';
 
 const DRAFT_STORAGE_KEY = 'rental_roi_draft';
 
@@ -53,6 +55,9 @@ export function RentalROICalculator() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [currentDraftName, setCurrentDraftName] = useState<string | undefined>();
+
+  const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<Assumptions>('rental-roi');
 
   const handleSaveDraft = useCallback(() => {
     setIsSaving(true);
@@ -74,6 +79,7 @@ export function RentalROICalculator() {
       setAssumptions(EMPTY_ASSUMPTIONS);
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       setResetKey(k => k + 1);
+      setCurrentDraftName(undefined);
       setShowResetConfirm(false);
       setToast({ message: 'All values reset', type: 'success' });
     } else {
@@ -81,6 +87,24 @@ export function RentalROICalculator() {
       setTimeout(() => setShowResetConfirm(false), 3000);
     }
   }, [showResetConfirm]);
+
+  const handleSelectDraft = useCallback((draft: ArchivedDraft<Assumptions>) => {
+    setAssumptions(draft.data);
+    setCurrentDraftName(draft.name);
+    setResetKey(k => k + 1);
+    setToast({ message: `Loaded "${draft.name}"`, type: 'success' });
+  }, []);
+
+  const handleSaveArchive = useCallback((name: string) => {
+    saveArchivedDraft(name, assumptions);
+    setCurrentDraftName(name);
+    setToast({ message: `Saved "${name}"`, type: 'success' });
+  }, [saveArchivedDraft, assumptions]);
+
+  const handleDeleteDraft = useCallback((id: string) => {
+    deleteDraft(id);
+    setToast({ message: 'Draft deleted', type: 'success' });
+  }, [deleteDraft]);
 
   const data = useMemo(() => calculateProjections(assumptions), [assumptions]);
   const averages = useMemo(() => calculateAverage(data), [data]);
@@ -157,6 +181,14 @@ export function RentalROICalculator() {
                 ))}
               </select>
             </div>
+
+            <DraftSelector
+              drafts={drafts}
+              onSelect={handleSelectDraft}
+              onSave={handleSaveArchive}
+              onDelete={handleDeleteDraft}
+              currentName={currentDraftName}
+            />
 
             <button
               onClick={handleReset}

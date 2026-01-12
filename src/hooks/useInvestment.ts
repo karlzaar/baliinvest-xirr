@@ -412,6 +412,10 @@ export function useInvestment() {
     }
   }, [data]);
 
+  const loadDraft = useCallback((draftData: InvestmentData) => {
+    setData(draftData);
+  }, []);
+
   return {
     data,
     result,
@@ -443,5 +447,6 @@ export function useInvestment() {
     updateCashFlow,
     reset,
     saveDraft,
+    loadDraft,
   };
 }

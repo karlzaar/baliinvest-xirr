@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useInvestment } from '../../hooks/useInvestment';
+import { useArchivedDrafts, type ArchivedDraft } from '../../hooks/useArchivedDrafts';
 import {
   PropertyDetails,
   PaymentTerms,
@@ -7,7 +8,9 @@ import {
   ProjectForecast,
 } from '../../components';
 import { Toast } from '../../components/ui/Toast';
+import { DraftSelector } from '../../components/ui/DraftSelector';
 import { generatePDFReport } from '../../utils/pdfExport';
+import type { InvestmentData } from '../../types/investment';
 
 export function XIRRCalculator() {
   const {
@@ -33,7 +36,11 @@ export function XIRRCalculator() {
     updateExit,
     reset,
     saveDraft,
+    loadDraft,
   } = useInvestment();
+
+  const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<InvestmentData>('xirr');
+  const [currentDraftName, setCurrentDraftName] = useState<string | undefined>();
 
   const [isSaving, setIsSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -54,6 +61,7 @@ export function XIRRCalculator() {
   const handleReset = useCallback(() => {
     if (showResetConfirm) {
       reset();
+      setCurrentDraftName(undefined);
       setShowResetConfirm(false);
       setToast({ message: 'All values reset', type: 'success' });
     } else {
@@ -61,6 +69,23 @@ export function XIRRCalculator() {
       setTimeout(() => setShowResetConfirm(false), 3000);
     }
   }, [showResetConfirm, reset]);
+
+  const handleSelectDraft = useCallback((draft: ArchivedDraft<InvestmentData>) => {
+    loadDraft(draft.data);
+    setCurrentDraftName(draft.name);
+    setToast({ message: `Loaded "${draft.name}"`, type: 'success' });
+  }, [loadDraft]);
+
+  const handleSaveArchive = useCallback((name: string) => {
+    saveArchivedDraft(name, data);
+    setCurrentDraftName(name);
+    setToast({ message: `Saved "${name}"`, type: 'success' });
+  }, [saveArchivedDraft, data]);
+
+  const handleDeleteDraft = useCallback((id: string) => {
+    deleteDraft(id);
+    setToast({ message: 'Draft deleted', type: 'success' });
+  }, [deleteDraft]);
 
   const dataRef = useRef(data);
   const resultRef = useRef(result);
@@ -176,6 +201,14 @@ export function XIRRCalculator() {
                 <option value="RUB">₽ RUB</option>
               </select>
             </div>
+
+            <DraftSelector
+              drafts={drafts}
+              onSelect={handleSelectDraft}
+              onSave={handleSaveArchive}
+              onDelete={handleDeleteDraft}
+              currentName={currentDraftName}
+            />
 
             <button
               onClick={handleReset}
