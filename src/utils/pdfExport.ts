@@ -149,6 +149,9 @@ export function generatePDFReport(options: PDFExportOptions): void {
     : 0;
   const closingCosts = data.exit.projectedSalesPrice * (data.exit.closingCostPercent / 100);
   const netProceeds = data.exit.projectedSalesPrice - closingCosts;
+  const salePricePerSqm = data.property.propertySize > 0
+    ? Math.round(toDisplay(data.exit.projectedSalesPrice) / data.property.propertySize)
+    : 0;
   const dealRating = getDealRating(result.rate);
   const marketRisk = getMarketRisk(result.holdPeriodMonths, appreciation);
   const downPayment = data.property.totalPrice * (data.payment.downPaymentPercent / 100);
@@ -404,8 +407,8 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setFont('helvetica', 'bold');
   doc.text('Exit Strategy', rightColX + 6, yPos + 8);
 
-  // Two boxes row
-  const boxWidth = (colWidth - 18) / 2;
+  // Three boxes row
+  const boxWidth = (colWidth - 20) / 3;
 
   // Gross Sale Price box
   doc.setFillColor(...COLORS.background);
@@ -413,27 +416,37 @@ export function generatePDFReport(options: PDFExportOptions): void {
   doc.setTextColor(...COLORS.textLight);
   doc.setFontSize(FONT.xs);
   doc.setFont('helvetica', 'normal');
-  doc.text('Gross Sale Price', rightColX + 8, yPos + 16);
+  doc.text('Gross Sale', rightColX + 8, yPos + 16);
   doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(FONT.md);
+  doc.setFontSize(FONT.sm);
   doc.setFont('helvetica', 'bold');
   doc.text(`${symbol} ${toDisplay(data.exit.projectedSalesPrice).toLocaleString()}`, rightColX + 8, yPos + 22);
 
   // Closing Costs box
+  const box2X = rightColX + 6 + boxWidth + 3;
   doc.setFillColor(...COLORS.background);
-  doc.roundedRect(rightColX + 6 + boxWidth + 4, yPos + 12, boxWidth, 14, 1, 1, 'F');
+  doc.roundedRect(box2X, yPos + 12, boxWidth, 14, 1, 1, 'F');
   doc.setTextColor(...COLORS.textLight);
   doc.setFontSize(FONT.xs);
   doc.setFont('helvetica', 'normal');
-  doc.text('Closing Costs', rightColX + 8 + boxWidth + 4, yPos + 16);
+  doc.text('Closing Costs', box2X + 2, yPos + 16);
   doc.setTextColor(...COLORS.textDark);
-  doc.setFontSize(FONT.md);
+  doc.setFontSize(FONT.sm);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${symbol} ${toDisplay(closingCosts).toLocaleString()}`, rightColX + 8 + boxWidth + 4, yPos + 22);
+  doc.text(`${symbol} ${toDisplay(closingCosts).toLocaleString()}`, box2X + 2, yPos + 22);
+
+  // New Price per sqm box
+  const box3X = rightColX + 6 + (boxWidth + 3) * 2;
+  doc.setFillColor(...COLORS.background);
+  doc.roundedRect(box3X, yPos + 12, boxWidth, 14, 1, 1, 'F');
   doc.setTextColor(...COLORS.textLight);
   doc.setFontSize(FONT.xs);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${data.exit.closingCostPercent}% Total Expenses`, rightColX + 8 + boxWidth + 4, yPos + 26);
+  doc.text('New Price/m²', box3X + 2, yPos + 16);
+  doc.setTextColor(...COLORS.primary);
+  doc.setFontSize(FONT.sm);
+  doc.setFont('helvetica', 'bold');
+  doc.text(salePricePerSqm > 0 ? `${symbol} ${salePricePerSqm.toLocaleString()}` : 'N/A', box3X + 2, yPos + 22);
 
   // Net Proceeds row
   doc.setFillColor(...COLORS.primaryLight);
