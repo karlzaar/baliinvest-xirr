@@ -31,7 +31,6 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
             <h3 className="text-sm font-semibold text-slate-700">
               Operating Cost Basis (% Revenue)
             </h3>
-            <Tooltip text="Direct operating costs expressed as a percentage of their respective revenue streams. These costs vary directly with occupancy and service delivery." />
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-10">
             <SecondaryInput label="Rooms Cost" value={assumptions.roomsCostPct} placeholder={PLACEHOLDER_VALUES.roomsCostPct} onChange={(v) => handleChange('roomsCostPct', v)} isPercentage tooltip="Direct cost of room operations as % of room revenue. Includes housekeeping, amenities, laundry, and linens." />
@@ -48,7 +47,6 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
             <h3 className="text-sm font-semibold text-slate-700">
               Undistributed Expenses (% Revenue)
             </h3>
-            <Tooltip text="Overhead costs not directly tied to specific departments. These are expressed as a percentage of total revenue." />
           </div>
           <div className="grid grid-cols-3 gap-x-8 gap-y-10">
             <SecondaryInput label="Admin & General" value={assumptions.adminPct} placeholder={PLACEHOLDER_VALUES.adminPct} onChange={(v) => handleChange('adminPct', v)} isPercentage tooltip="Administrative costs as % of revenue. Includes accounting, HR, insurance, and general office expenses." />
@@ -64,7 +62,6 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
             <h3 className="text-sm font-semibold text-slate-700">
               Annual Growth Rates (% p.a.)
             </h3>
-            <Tooltip text="Year-over-year growth rates that compound throughout the 10-year projection period." />
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-10">
             <SecondaryInput label="ADR Growth" value={assumptions.adrGrowth} placeholder={PLACEHOLDER_VALUES.adrGrowth} onChange={(v) => handleChange('adrGrowth', v)} isPercentage tooltip="Annual rate increase for room rates. Typically 3-6% in growing markets like Bali." />
@@ -79,7 +76,6 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
             <h3 className="text-sm font-semibold text-slate-700">
               Year 1 Management Fees ({currency.code})
             </h3>
-            <Tooltip text="Fixed management fees for Year 1. These grow annually based on the fee growth rate defined above." />
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-10">
             <CurrencyInput label="CAM Fee" value={assumptions.y1CAM} placeholder={PLACEHOLDER_VALUES.y1CAM} onChange={(v) => handleChange('y1CAM', v)} currency={currency} tooltip="Common Area Maintenance fee per year. Covers shared facilities, landscaping, and common area upkeep." />

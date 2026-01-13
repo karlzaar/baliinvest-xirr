@@ -1,5 +1,4 @@
 import type { ExitStrategy as ExitStrategyData } from '../../types/investment';
-import { Tooltip } from '../ui/Tooltip';
 
 interface Props {
   data: ExitStrategyData;
@@ -75,7 +74,6 @@ export function ExitStrategySection({
       <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
         <span className="material-symbols-outlined text-primary">flight_takeoff</span>
         <h2 className="text-xl font-bold text-text-primary">Exit Strategy</h2>
-        <Tooltip text="Your planned exit - selling upon completion. Enter the expected sale price to calculate your investment return (XIRR)." />
         <span className="ml-auto text-sm text-primary bg-primary-light px-3 py-1 rounded-full font-medium">
           Flip at Completion
         </span>
@@ -85,9 +83,8 @@ export function ExitStrategySection({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Projected Sales Price */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Projected Sales Price
-            <Tooltip text="Expected sale price when you sell the property. Use market comparables and developer projections for estimates." />
           </span>
           <span className="text-xs text-text-muted truncate" title={totalPriceIDR > 0 ? `Appreciation: +${appreciation.toFixed(2)}%` : undefined}>
             {totalPriceIDR > 0 ? `Appreciation: ${formatAppreciation()}` : 'Set purchase price first'}
@@ -108,19 +105,11 @@ export function ExitStrategySection({
 
         {/* Sale Date */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Sale Date
-            <Tooltip text="Date when you receive the final sale payment. Usually set a few months after handover to allow time for sale process." />
           </span>
-          <span className="text-xs text-text-muted flex items-center gap-1">
-            {handoverDate ? (
-              <>
-                Handover: {formattedHandoverDate}
-                <Tooltip text="This is when the property is handed over to you. Set your Sale Date after this to allow time for the sale process." />
-              </>
-            ) : (
-              'Set handover date above'
-            )}
+          <span className="text-xs text-text-muted">
+            {handoverDate ? `Handover: ${formattedHandoverDate}` : 'Set handover date above'}
           </span>
           <input
             type="date"
@@ -132,9 +121,8 @@ export function ExitStrategySection({
 
         {/* Closing Costs */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Closing Costs
-            <Tooltip text="Transaction costs when selling: agent commissions (2-5%), taxes, legal fees. Deducted from your profit." />
           </span>
           <span className="text-xs text-text-muted">Taxes, fees, commissions</span>
           <div className="flex items-center gap-2">
