@@ -201,14 +201,13 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
 
   const params = [
     { label: 'Initial Investment', value: formatCurrency(assumptions.initialInvestment, currency) },
-    { label: 'Property Keys', value: assumptions.keys.toString() },
     { label: 'Y1 Occupancy', value: `${assumptions.y1Occupancy}%` },
     { label: 'Y1 ADR', value: formatCurrency(assumptions.y1ADR, currency) },
     { label: 'ADR Growth', value: `${assumptions.adrGrowth}%` },
     { label: 'Base Year', value: assumptions.baseYear.toString() },
   ];
 
-  const paramWidth = contentWidth / 6;
+  const paramWidth = contentWidth / 5;
   params.forEach((param, i) => {
     const px = margin + 4 + i * paramWidth;
     if (i > 0) {
