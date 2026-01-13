@@ -387,7 +387,7 @@ export async function generateRentalROIPDF(options: PDFExportOptions): Promise<v
   doc.text('Year 1 vs Year 10 Growth', margin, yPos);
   yPos += 5;
 
-  const compBoxHeight = 24;
+  const compBoxHeight = 28;
   doc.setFillColor(...COLORS.cardBg);
   doc.roundedRect(margin, yPos, contentWidth, compBoxHeight, 2, 2, 'F');
   doc.setDrawColor(...COLORS.border);
@@ -426,11 +426,12 @@ export async function generateRentalROIPDF(options: PDFExportOptions): Promise<v
       doc.text(`Y10: ${formatCurrency(comp.y10, currency)}`, cx, yPos + 16);
     }
 
-    // Growth percentage (capped)
+    // Growth percentage (capped) - positioned below Y10
     const growth = calcGrowth(comp.y1, comp.y10);
     doc.setTextColor(growth >= 0 ? COLORS.primary[0] : COLORS.red[0], growth >= 0 ? COLORS.primary[1] : COLORS.red[1], growth >= 0 ? COLORS.primary[2] : COLORS.red[2]);
+    doc.setFontSize(FONT.sm);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${growth >= 0 ? '+' : ''}${growth.toFixed(0)}%`, cx + compWidth - 18, yPos + 13);
+    doc.text(`Growth: ${growth >= 0 ? '+' : ''}${growth.toFixed(0)}%`, cx, yPos + 22);
   });
 
   yPos += compBoxHeight + 6;
