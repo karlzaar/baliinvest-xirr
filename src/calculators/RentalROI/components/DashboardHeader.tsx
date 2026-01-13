@@ -36,7 +36,7 @@ const DashboardHeader: React.FC<Props> = ({ data, currency }) => {
   const totalProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0);
 
   return (
-    <div className="sticky top-8 flex flex-col gap-4 z-40">
+    <div className="sticky top-24 flex flex-col gap-4 z-40">
       <Card
         title="Avg Annual Cash Flow"
         value={formatCurrencyAbbrev(avgProfit, currency)}
