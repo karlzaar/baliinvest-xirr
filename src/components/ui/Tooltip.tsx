@@ -23,7 +23,7 @@ export function Tooltip({ text }: Props) {
         ?
       </button>
       {show && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg whitespace-normal w-64 z-50 animate-in fade-in duration-150">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg whitespace-normal w-64 z-50 animate-in fade-in duration-150 normal-case tracking-normal font-normal">
           {text}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
         </div>
