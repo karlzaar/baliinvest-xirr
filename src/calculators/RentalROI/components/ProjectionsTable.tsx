@@ -227,7 +227,7 @@ const ProjectionsTable: React.FC<Props> = ({ data, avg, currency }) => {
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                         </svg>
-                        <span className="font-semibold text-slate-700 uppercase tracking-wide text-xs">{section.title}</span>
+                        <span className="font-bold text-slate-800 uppercase tracking-wide text-sm">{section.title}</span>
                       </div>
                     </td>
                     {data.map(y => (

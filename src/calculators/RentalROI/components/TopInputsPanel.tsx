@@ -28,7 +28,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* Core Investment Section */}
         <section className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wide mb-4">Core Investment</h3>
+          <h3 className="text-base font-semibold text-slate-800 mb-4">Core Investment</h3>
           <div className="grid grid-cols-1 gap-6">
             <TopInputGroup
               label={`Initial Capex (${currency.code})`}
@@ -53,7 +53,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
         {/* Year 1 Targets Section */}
         <section className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wide mb-4">Year 1 Targets</h3>
+          <h3 className="text-base font-semibold text-slate-800 mb-4">Year 1 Targets</h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-6">
             <TopInputGroup
               label="Occupancy %"
@@ -104,13 +104,13 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
       {showOccupancyGrowth && (
         <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-2 mb-6">
-            <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Yearly Occupancy Point Increase</h4>
+            <h4 className="text-sm font-semibold text-slate-700">Yearly Occupancy Point Increase</h4>
             <Tooltip text="Percentage points added to occupancy each year. E.g., if Y1 is 55% and Y2 increase is 4%, then Y2 occupancy becomes 59%." />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4">
             {assumptions.occupancyIncreases.map((val, idx) => (
               <div key={idx} className="space-y-2">
-                <label className="text-[10px] font-semibold text-slate-500 uppercase">Y{idx + 2}</label>
+                <label className="text-xs font-medium text-slate-500">Y{idx + 2}</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -176,7 +176,7 @@ const TopInputGroup: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+      <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>

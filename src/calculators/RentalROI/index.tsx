@@ -193,23 +193,6 @@ export function RentalROICalculator() {
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
-            {user && (
-              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-                <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-black text-emerald-600 uppercase tracking-tighter">
-                  {user.name.charAt(0)}
-                </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{user.name}</span>
-                <button
-                  onClick={() => setUser(null)}
-                  className="text-slate-300 hover:text-red-400 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                </button>
-              </div>
-            )}
-
             <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
               <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Currency</span>
               <select

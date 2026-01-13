@@ -45,22 +45,6 @@ const FONT = {
   xxl: 18,
 };
 
-// Helper to format compact currency
-function formatCompact(value: number, currency: CurrencyConfig): string {
-  const absVal = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (absVal >= 1000000000) {
-    return `${sign}${currency.symbol}${(absVal / 1000000000).toFixed(1)}B`;
-  }
-  if (absVal >= 1000000) {
-    return `${sign}${currency.symbol}${(absVal / 1000000).toFixed(1)}M`;
-  }
-  if (absVal >= 1000) {
-    return `${sign}${currency.symbol}${(absVal / 1000).toFixed(0)}K`;
-  }
-  return `${sign}${currency.symbol}${absVal.toFixed(0)}`;
-}
-
 // Helper to cap percentages to reasonable bounds
 function capPercent(value: number, max: number = 999): string {
   if (!isFinite(value) || isNaN(value)) return '0.0';
@@ -234,7 +218,7 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
   doc.setTextColor(...COLORS.textMedium);
   doc.setFontSize(FONT.sm);
   doc.setFont('helvetica', 'normal');
-  const aiSummary = `This ${assumptions.keys}-key property shows ${dealRating.label.toLowerCase()} investment potential with projected ${capPercent(avgNetYield)}% avg net yield over 10 years. With ${formatCompact(totalProfit, currency)} total profit and ${paybackYears < 99 ? paybackYears.toFixed(1) : '10+'} year payback, this rental strategy offers ${appreciationType.toLowerCase()} appreciation potential.`;
+  const aiSummary = `This ${assumptions.keys}-key property shows ${dealRating.label.toLowerCase()} investment potential with projected ${capPercent(avgNetYield)}% avg net yield over 10 years. With ${formatCurrency(totalProfit, currency)} total profit and ${paybackYears < 99 ? paybackYears.toFixed(1) : '10+'} year payback, this rental strategy offers ${appreciationType.toLowerCase()} appreciation potential.`;
   const splitSummary = doc.splitTextToSize(aiSummary, summaryWidth);
   doc.text(splitSummary.slice(0, 3), summaryX, yPos + 14);
 
@@ -272,8 +256,8 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
 
   const metrics = [
     { label: 'AVG NET YIELD', value: `${capPercent(avgNetYield)}%`, subtitle: 'Annual Return', isHighlight: true },
-    { label: '10Y NET PROFIT', value: formatCompact(totalProfit, currency), subtitle: 'Total Earnings', isHighlight: false },
-    { label: 'AVG CASH FLOW', value: formatCompact(avgProfit, currency), subtitle: 'Per Year', isHighlight: false },
+    { label: '10Y NET PROFIT', value: formatCurrency(totalProfit, currency), subtitle: 'Total Earnings', isHighlight: false },
+    { label: 'AVG CASH FLOW', value: formatCurrency(avgProfit, currency), subtitle: 'Per Year', isHighlight: false },
     { label: 'GOP MARGIN', value: `${capPercent(avgGopMargin)}%`, subtitle: 'Avg Margin', isHighlight: false },
     { label: 'PAYBACK', value: paybackYears < 99 ? `${paybackYears.toFixed(1)} Yrs` : 'N/A', subtitle: 'Recovery', isHighlight: false },
   ];
@@ -324,10 +308,10 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
   doc.roundedRect(margin, yPos, contentWidth, paramBoxHeight, 2, 2, 'S');
 
   const params = [
-    { label: 'Initial Investment', value: formatCompact(assumptions.initialInvestment, currency) },
+    { label: 'Initial Investment', value: formatCurrency(assumptions.initialInvestment, currency) },
     { label: 'Property Keys', value: assumptions.keys.toString() },
     { label: 'Y1 Occupancy', value: `${assumptions.y1Occupancy}%` },
-    { label: 'Y1 ADR', value: formatCompact(assumptions.y1ADR, currency) },
+    { label: 'Y1 ADR', value: formatCurrency(assumptions.y1ADR, currency) },
     { label: 'ADR Growth', value: `${assumptions.adrGrowth}%` },
     { label: 'Base Year', value: assumptions.baseYear.toString() },
   ];
@@ -391,24 +375,24 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
     doc.text(`Y${row.year}`, cellX, yPos + 4.5);
     cellX += colWidths[0];
 
-    doc.text(formatCompact(row.totalRevenue, currency), cellX, yPos + 4.5);
+    doc.text(formatCurrency(row.totalRevenue, currency), cellX, yPos + 4.5);
     cellX += colWidths[1];
 
     const totalExpenses = row.totalOperatingCost + row.totalUndistributedCost;
-    doc.text(formatCompact(totalExpenses, currency), cellX, yPos + 4.5);
+    doc.text(formatCurrency(totalExpenses, currency), cellX, yPos + 4.5);
     cellX += colWidths[2];
 
     doc.setTextColor(...COLORS.primary);
-    doc.text(formatCompact(row.gop, currency), cellX, yPos + 4.5);
+    doc.text(formatCurrency(row.gop, currency), cellX, yPos + 4.5);
     cellX += colWidths[3];
 
     doc.setTextColor(...COLORS.orange);
-    doc.text(formatCompact(row.totalManagementFees, currency), cellX, yPos + 4.5);
+    doc.text(formatCurrency(row.totalManagementFees, currency), cellX, yPos + 4.5);
     cellX += colWidths[4];
 
     doc.setTextColor(row.takeHomeProfit >= 0 ? COLORS.primary[0] : COLORS.red[0], row.takeHomeProfit >= 0 ? COLORS.primary[1] : COLORS.red[1], row.takeHomeProfit >= 0 ? COLORS.primary[2] : COLORS.red[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text(formatCompact(row.takeHomeProfit, currency), cellX, yPos + 4.5);
+    doc.text(formatCurrency(row.takeHomeProfit, currency), cellX, yPos + 4.5);
     cellX += colWidths[5];
 
     doc.setTextColor(...COLORS.textDark);
@@ -428,18 +412,18 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
   let totalX = margin + 2;
   doc.text('TOTAL', totalX, yPos + 5);
   totalX += colWidths[0];
-  doc.text(formatCompact(totalRevenue, currency), totalX, yPos + 5);
+  doc.text(formatCurrency(totalRevenue, currency), totalX, yPos + 5);
   totalX += colWidths[1];
   const totalExpenses = data.reduce((s, d) => s + d.totalOperatingCost + d.totalUndistributedCost, 0);
-  doc.text(formatCompact(totalExpenses, currency), totalX, yPos + 5);
+  doc.text(formatCurrency(totalExpenses, currency), totalX, yPos + 5);
   totalX += colWidths[2];
   const totalGOP = data.reduce((s, d) => s + d.gop, 0);
-  doc.text(formatCompact(totalGOP, currency), totalX, yPos + 5);
+  doc.text(formatCurrency(totalGOP, currency), totalX, yPos + 5);
   totalX += colWidths[3];
   const totalMgmt = data.reduce((s, d) => s + d.totalManagementFees, 0);
-  doc.text(formatCompact(totalMgmt, currency), totalX, yPos + 5);
+  doc.text(formatCurrency(totalMgmt, currency), totalX, yPos + 5);
   totalX += colWidths[4];
-  doc.text(formatCompact(totalProfit, currency), totalX, yPos + 5);
+  doc.text(formatCurrency(totalProfit, currency), totalX, yPos + 5);
   totalX += colWidths[5];
   doc.text(`${capPercent(avgNetYield)}%`, totalX, yPos + 5);
 
@@ -489,8 +473,8 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
       doc.text(`Y1: ${comp.y1.toFixed(0)}%`, cx, yPos + 11);
       doc.text(`Y10: ${comp.y10.toFixed(0)}%`, cx, yPos + 16);
     } else {
-      doc.text(`Y1: ${formatCompact(comp.y1, currency)}`, cx, yPos + 11);
-      doc.text(`Y10: ${formatCompact(comp.y10, currency)}`, cx, yPos + 16);
+      doc.text(`Y1: ${formatCurrency(comp.y1, currency)}`, cx, yPos + 11);
+      doc.text(`Y10: ${formatCurrency(comp.y10, currency)}`, cx, yPos + 16);
     }
 
     // Growth percentage (capped)
@@ -530,80 +514,8 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
   doc.setTextColor(...COLORS.textDark);
   doc.setFontSize(FONT.lg);
   doc.setFont('helvetica', 'bold');
-  doc.text('Year 1 Revenue & Cost Breakdown', margin, yPos + 6);
-  yPos += 12;
-
-  const summaryHeight = 30;
-  doc.setFillColor(...COLORS.cardBg);
-  doc.roundedRect(margin, yPos, contentWidth, summaryHeight, 2, 2, 'F');
-  doc.setDrawColor(...COLORS.border);
-  doc.roundedRect(margin, yPos, contentWidth, summaryHeight, 2, 2, 'S');
-
-  // Revenue items
-  const revItems = [
-    { label: 'Rooms', value: y1Data.revenueRooms, pct: y1Data.revenueRoomsPercent },
-    { label: 'F&B', value: y1Data.revenueFB, pct: y1Data.revenueFBPercent },
-    { label: 'Spa', value: y1Data.revenueSpa, pct: y1Data.revenueSpaPercent },
-    { label: 'Other', value: y1Data.revenueOODs + y1Data.revenueMisc, pct: y1Data.revenueOODsPercent + y1Data.revenueMiscPercent },
-  ];
-
-  // Cost items
-  const costItems = [
-    { label: 'Operating', value: y1Data.totalOperatingCost, pct: y1Data.operatingCostPercent },
-    { label: 'Undist.', value: y1Data.totalUndistributedCost, pct: y1Data.undistributedCostPercent },
-    { label: 'Mgmt Fees', value: y1Data.totalManagementFees, pct: y1Data.managementFeesPercent },
-  ];
-
-  // Revenue row
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'bold');
-  doc.text('REVENUE', margin + 4, yPos + 6);
-
-  const revColWidth = (contentWidth - 50) / 4;
-  revItems.forEach((item, i) => {
-    const rx = margin + 40 + i * revColWidth;
-    doc.setTextColor(...COLORS.textMedium);
-    doc.setFontSize(FONT.xs);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${item.label} (${capPercent(item.pct, 100)}%)`, rx, yPos + 6);
-    doc.setTextColor(...COLORS.textDark);
-    doc.setFont('helvetica', 'bold');
-    doc.text(formatCompact(item.value, currency), rx, yPos + 12);
-  });
-
-  // Divider
-  doc.setDrawColor(...COLORS.borderLight);
-  doc.line(margin + 4, yPos + 15, pageWidth - margin - 4, yPos + 15);
-
-  // Cost row
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'bold');
-  doc.text('COSTS', margin + 4, yPos + 20);
-
-  const costColWidth = (contentWidth - 50) / 3;
-  costItems.forEach((item, i) => {
-    const cx = margin + 40 + i * costColWidth;
-    doc.setTextColor(...COLORS.textMedium);
-    doc.setFontSize(FONT.xs);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${item.label} (${capPercent(item.pct, 100)}%)`, cx, yPos + 20);
-    doc.setTextColor(...COLORS.red);
-    doc.setFont('helvetica', 'bold');
-    doc.text(formatCompact(item.value, currency), cx, yPos + 26);
-  });
-
-  yPos += summaryHeight + 12;
-
-  // ========================================
-  // YEARLY PERFORMANCE BREAKDOWN
-  // ========================================
-  doc.setTextColor(...COLORS.textDark);
-  doc.setFontSize(FONT.lg);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Performance Summary by Year', margin, yPos);
-  yPos += 8;
+  doc.text('Performance Summary by Year', margin, yPos + 6);
+  yPos += 14;
 
   // Performance grid - 2x5 layout
   const perfBoxWidth = (contentWidth - 4) / 5;
@@ -631,7 +543,7 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
     doc.setTextColor(row.takeHomeProfit >= 0 ? COLORS.primary[0] : COLORS.red[0], row.takeHomeProfit >= 0 ? COLORS.primary[1] : COLORS.red[1], row.takeHomeProfit >= 0 ? COLORS.primary[2] : COLORS.red[2]);
     doc.setFontSize(FONT.sm);
     doc.setFont('helvetica', 'bold');
-    doc.text(formatCompact(row.takeHomeProfit, currency), px + 3, py + 12);
+    doc.text(formatCurrency(row.takeHomeProfit, currency), px + 3, py + 12);
 
     // ROI
     doc.setTextColor(...COLORS.textMedium);

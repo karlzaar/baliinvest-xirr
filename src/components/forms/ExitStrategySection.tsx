@@ -112,8 +112,15 @@ export function ExitStrategySection({
             Sale Date
             <Tooltip text="Date when you receive the final sale payment. Usually set a few months after handover to allow time for sale process." />
           </span>
-          <span className="text-xs text-text-muted">
-            {handoverDate ? `Handover: ${formattedHandoverDate}` : 'Set handover date above'}
+          <span className="text-xs text-text-muted flex items-center gap-1">
+            {handoverDate ? (
+              <>
+                Handover: {formattedHandoverDate}
+                <Tooltip text="This is when the property is handed over to you. Set your Sale Date after this to allow time for the sale process." />
+              </>
+            ) : (
+              'Set handover date above'
+            )}
           </span>
           <input
             type="date"

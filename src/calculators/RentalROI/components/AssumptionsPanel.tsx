@@ -18,7 +18,7 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
     <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-12 mt-12 mb-4">
       <div className="flex items-center gap-4 mb-12">
         <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
-        <h2 className="text-base font-semibold text-slate-800 uppercase tracking-wide">Operational Dynamics & Growth Variables</h2>
+        <h2 className="text-lg font-semibold text-slate-800">Operational Dynamics & Growth Variables</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-24 gap-y-16">
@@ -26,16 +26,16 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
         <section className="space-y-8">
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-red-500"></div>
-            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-700">
               Operating Cost Basis (% Revenue)
             </h3>
             <Tooltip text="Direct operating costs expressed as a percentage of their respective revenue streams. These costs vary directly with occupancy and service delivery." />
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-10">
-            <SecondaryInput label="ROOMS COST" value={assumptions.roomsCostPct} placeholder={PLACEHOLDER_VALUES.roomsCostPct} onChange={(v) => handleChange('roomsCostPct', v)} isPercentage tooltip="Direct cost of room operations as % of room revenue. Includes housekeeping, amenities, laundry, and linens." />
-            <SecondaryInput label="F&B COST" value={assumptions.fbCostPct} placeholder={PLACEHOLDER_VALUES.fbCostPct} onChange={(v) => handleChange('fbCostPct', v)} isPercentage tooltip="Cost of goods sold for F&B as % of F&B revenue. Includes ingredients, beverages, and kitchen supplies." />
-            <SecondaryInput label="WELLNESS" value={assumptions.spaCostPct} placeholder={PLACEHOLDER_VALUES.spaCostPct} onChange={(v) => handleChange('spaCostPct', v)} isPercentage tooltip="Direct spa costs as % of spa revenue. Includes therapist wages, oils, products, and equipment." />
-            <SecondaryInput label="UTILITIES" value={assumptions.utilitiesPct} placeholder={PLACEHOLDER_VALUES.utilitiesPct} onChange={(v) => handleChange('utilitiesPct', v)} isPercentage tooltip="Electricity, water, gas, and internet costs as % of total revenue." />
+            <SecondaryInput label="Rooms Cost" value={assumptions.roomsCostPct} placeholder={PLACEHOLDER_VALUES.roomsCostPct} onChange={(v) => handleChange('roomsCostPct', v)} isPercentage tooltip="Direct cost of room operations as % of room revenue. Includes housekeeping, amenities, laundry, and linens." />
+            <SecondaryInput label="F&B Cost" value={assumptions.fbCostPct} placeholder={PLACEHOLDER_VALUES.fbCostPct} onChange={(v) => handleChange('fbCostPct', v)} isPercentage tooltip="Cost of goods sold for F&B as % of F&B revenue. Includes ingredients, beverages, and kitchen supplies." />
+            <SecondaryInput label="Wellness" value={assumptions.spaCostPct} placeholder={PLACEHOLDER_VALUES.spaCostPct} onChange={(v) => handleChange('spaCostPct', v)} isPercentage tooltip="Direct spa costs as % of spa revenue. Includes therapist wages, oils, products, and equipment." />
+            <SecondaryInput label="Utilities" value={assumptions.utilitiesPct} placeholder={PLACEHOLDER_VALUES.utilitiesPct} onChange={(v) => handleChange('utilitiesPct', v)} isPercentage tooltip="Electricity, water, gas, and internet costs as % of total revenue." />
           </div>
         </section>
 
@@ -43,15 +43,15 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
         <section className="space-y-8">
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-700">
               Undistributed Expenses (% Revenue)
             </h3>
             <Tooltip text="Overhead costs not directly tied to specific departments. These are expressed as a percentage of total revenue." />
           </div>
           <div className="grid grid-cols-3 gap-x-8 gap-y-10">
-            <SecondaryInput label="ADMIN & GEN" value={assumptions.adminPct} placeholder={PLACEHOLDER_VALUES.adminPct} onChange={(v) => handleChange('adminPct', v)} isPercentage tooltip="Administrative costs as % of revenue. Includes accounting, HR, insurance, and general office expenses." />
-            <SecondaryInput label="SALES & MKT" value={assumptions.salesPct} placeholder={PLACEHOLDER_VALUES.salesPct} onChange={(v) => handleChange('salesPct', v)} isPercentage tooltip="Sales & Marketing costs as % of revenue. Includes OTA commissions, advertising, and promotional activities." />
-            <SecondaryInput label="PROPERTY OPS" value={assumptions.maintPct} placeholder={PLACEHOLDER_VALUES.maintPct} onChange={(v) => handleChange('maintPct', v)} isPercentage tooltip="Property operations and maintenance as % of revenue. Includes repairs, landscaping, and general upkeep." />
+            <SecondaryInput label="Admin & General" value={assumptions.adminPct} placeholder={PLACEHOLDER_VALUES.adminPct} onChange={(v) => handleChange('adminPct', v)} isPercentage tooltip="Administrative costs as % of revenue. Includes accounting, HR, insurance, and general office expenses." />
+            <SecondaryInput label="Sales & Marketing" value={assumptions.salesPct} placeholder={PLACEHOLDER_VALUES.salesPct} onChange={(v) => handleChange('salesPct', v)} isPercentage tooltip="Sales & Marketing costs as % of revenue. Includes OTA commissions, advertising, and promotional activities." />
+            <SecondaryInput label="Property Ops" value={assumptions.maintPct} placeholder={PLACEHOLDER_VALUES.maintPct} onChange={(v) => handleChange('maintPct', v)} isPercentage tooltip="Property operations and maintenance as % of revenue. Includes repairs, landscaping, and general upkeep." />
           </div>
         </section>
 
@@ -59,14 +59,14 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
         <section className="space-y-8">
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-700">
               Annual Growth Rates (% p.a.)
             </h3>
             <Tooltip text="Year-over-year growth rates that compound throughout the 10-year projection period." />
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-10">
-            <SecondaryInput label="ADR GROWTH" value={assumptions.adrGrowth} placeholder={PLACEHOLDER_VALUES.adrGrowth} onChange={(v) => handleChange('adrGrowth', v)} isPercentage tooltip="Annual rate increase for room rates. Typically 3-6% in growing markets like Bali." />
-            <SecondaryInput label="FEE GROWTH" value={assumptions.baseFeeGrowth} placeholder={PLACEHOLDER_VALUES.baseFeeGrowth} onChange={(v) => handleChange('baseFeeGrowth', v)} isPercentage tooltip="Annual increase in management fees (CAM, Base, Tech). Usually tied to inflation (3-5%)." />
+            <SecondaryInput label="ADR Growth" value={assumptions.adrGrowth} placeholder={PLACEHOLDER_VALUES.adrGrowth} onChange={(v) => handleChange('adrGrowth', v)} isPercentage tooltip="Annual rate increase for room rates. Typically 3-6% in growing markets like Bali." />
+            <SecondaryInput label="Fee Growth" value={assumptions.baseFeeGrowth} placeholder={PLACEHOLDER_VALUES.baseFeeGrowth} onChange={(v) => handleChange('baseFeeGrowth', v)} isPercentage tooltip="Annual increase in management fees (CAM, Base, Tech). Usually tied to inflation (3-5%)." />
           </div>
         </section>
 
@@ -74,16 +74,16 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
         <section className="space-y-8">
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-700">
               Year 1 Management Fees ({currency.code})
             </h3>
             <Tooltip text="Fixed management fees for Year 1. These grow annually based on the fee growth rate defined above." />
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-10">
-            <CurrencyInput label="CAM FEE" value={assumptions.y1CAM} placeholder={PLACEHOLDER_VALUES.y1CAM} onChange={(v) => handleChange('y1CAM', v)} currency={currency} tooltip="Common Area Maintenance fee per year. Covers shared facilities, landscaping, and common area upkeep." />
-            <CurrencyInput label="BASE FEE" value={assumptions.y1BaseFee} placeholder={PLACEHOLDER_VALUES.y1BaseFee} onChange={(v) => handleChange('y1BaseFee', v)} currency={currency} tooltip="Base management fee per year. Fixed fee paid to property management company." />
-            <CurrencyInput label="TECH FEE" value={assumptions.y1TechFee} placeholder={PLACEHOLDER_VALUES.y1TechFee} onChange={(v) => handleChange('y1TechFee', v)} currency={currency} tooltip="Technology fee per year. Covers PMS, booking systems, and IT infrastructure." />
-            <SecondaryInput label="INCENTIVE %" value={assumptions.incentiveFeePct} placeholder={PLACEHOLDER_VALUES.incentiveFeePct} onChange={(v) => handleChange('incentiveFeePct', v)} isPercentage tooltip="Incentive fee as % of GOP. Performance-based fee paid when profitability targets are exceeded." />
+            <CurrencyInput label="CAM Fee" value={assumptions.y1CAM} placeholder={PLACEHOLDER_VALUES.y1CAM} onChange={(v) => handleChange('y1CAM', v)} currency={currency} tooltip="Common Area Maintenance fee per year. Covers shared facilities, landscaping, and common area upkeep." />
+            <CurrencyInput label="Base Fee" value={assumptions.y1BaseFee} placeholder={PLACEHOLDER_VALUES.y1BaseFee} onChange={(v) => handleChange('y1BaseFee', v)} currency={currency} tooltip="Base management fee per year. Fixed fee paid to property management company." />
+            <CurrencyInput label="Tech Fee" value={assumptions.y1TechFee} placeholder={PLACEHOLDER_VALUES.y1TechFee} onChange={(v) => handleChange('y1TechFee', v)} currency={currency} tooltip="Technology fee per year. Covers PMS, booking systems, and IT infrastructure." />
+            <SecondaryInput label="Incentive %" value={assumptions.incentiveFeePct} placeholder={PLACEHOLDER_VALUES.incentiveFeePct} onChange={(v) => handleChange('incentiveFeePct', v)} isPercentage tooltip="Incentive fee as % of GOP. Performance-based fee paid when profitability targets are exceeded." />
           </div>
         </section>
       </div>
@@ -101,7 +101,7 @@ const SecondaryInput: React.FC<{
 }> = ({ label, value, placeholder, onChange, isPercentage, tooltip }) => {
   return (
     <div className="space-y-3">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide ml-0.5">
+      <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600 ml-0.5">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>
@@ -149,7 +149,7 @@ const CurrencyInput: React.FC<{
 
   return (
     <div className="space-y-3">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide ml-0.5">
+      <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600 ml-0.5">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>

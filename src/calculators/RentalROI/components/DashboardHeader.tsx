@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { YearlyData, CurrencyConfig } from '../types';
-import { formatCurrencyAbbrev } from '../constants';
+import { formatCurrency } from '../constants';
 
 interface Props {
   data: YearlyData[];
@@ -36,10 +36,10 @@ const DashboardHeader: React.FC<Props> = ({ data, currency }) => {
   const totalProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0);
 
   return (
-    <div className="sticky top-8 flex flex-col gap-4 z-40">
+    <div className="sticky top-24 flex flex-col gap-4 z-40">
       <Card
         title="Avg Annual Cash Flow"
-        value={formatCurrencyAbbrev(avgProfit, currency)}
+        value={formatCurrency(avgProfit, currency)}
         label="Expected Owner Profit"
         tooltip="Average yearly cash you take home after all expenses, management fees, and taxes."
         icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -59,7 +59,7 @@ const DashboardHeader: React.FC<Props> = ({ data, currency }) => {
       />
       <Card
         title="Total 10Y Earnings"
-        value={formatCurrencyAbbrev(totalProfit, currency)}
+        value={formatCurrency(totalProfit, currency)}
         label="Cumulative Net Profit"
         tooltip="Total cash profit accumulated over the full 10-year period after all expenses."
         icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
@@ -69,7 +69,7 @@ const DashboardHeader: React.FC<Props> = ({ data, currency }) => {
       />
       <Card
         title="10Y Gross Potential"
-        value={formatCurrencyAbbrev(totalRevenue, currency)}
+        value={formatCurrency(totalRevenue, currency)}
         label="Total Revenue Projection"
         tooltip="Total gross revenue potential before any expenses, management fees, or taxes over 10 years."
         icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
