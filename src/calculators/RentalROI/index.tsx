@@ -2,13 +2,11 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { INITIAL_ASSUMPTIONS, EMPTY_ASSUMPTIONS, CURRENCIES } from './constants';
 import type { CurrencyCode, User, Assumptions } from './types';
 import { calculateProjections, calculateAverage } from './utils/calculations';
-import { generateRentalROIPDF } from './utils/pdfExport';
 import DashboardHeader from './components/DashboardHeader';
 import TopInputsPanel from './components/TopInputsPanel';
 import AssumptionsPanel from './components/AssumptionsPanel';
 import ProjectionsTable from './components/ProjectionsTable';
 import ReportView from './components/ReportView';
-import AuthModal from './components/AuthModal';
 import { Toast } from '../../components/ui/Toast';
 import { DraftSelector } from '../../components/ui/DraftSelector';
 import { useArchivedDrafts, type ArchivedDraft } from '../../hooks/useArchivedDrafts';
@@ -21,8 +19,6 @@ export function RentalROICalculator() {
     const saved = localStorage.getItem('roi_calculate_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [showAuth, setShowAuth] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   const [currencyCode, setCurrencyCode] = useState<CurrencyCode>(() => {
     const saved = localStorage.getItem('rental_roi_currency');
@@ -113,40 +109,6 @@ export function RentalROICalculator() {
   const data = useMemo(() => calculateProjections(assumptions), [assumptions]);
   const averages = useMemo(() => calculateAverage(data), [data]);
 
-  const exportPDF = useCallback(() => {
-    setIsExporting(true);
-    try {
-      generateRentalROIPDF({
-        data,
-        assumptions,
-        currency,
-        projectName: `${assumptions.keys}-Key Property`,
-      });
-      setToast({ message: 'PDF downloaded successfully!', type: 'success' });
-    } catch (error) {
-      console.error('PDF export error:', error);
-      setToast({ message: 'Failed to export PDF', type: 'error' });
-    } finally {
-      setTimeout(() => setIsExporting(false), 500);
-    }
-  }, [data, assumptions, currency]);
-
-  const handleDownloadPDF = useCallback(() => {
-    if (!user) {
-      setShowAuth(true);
-    } else {
-      exportPDF();
-    }
-  }, [user, exportPDF]);
-
-  const handleAuthSuccess = useCallback((u: User) => {
-    setUser(u);
-    setShowAuth(false);
-    setTimeout(() => {
-      exportPDF();
-    }, 500);
-  }, [exportPDF]);
-
   if (view === 'report') {
     return (
       <ReportView
@@ -163,11 +125,6 @@ export function RentalROICalculator() {
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
-      <AuthModal
-        isOpen={showAuth}
-        onClose={() => setShowAuth(false)}
-        onSuccess={handleAuthSuccess}
-      />
       {toast && (
         <Toast
           message={toast.message}
@@ -256,34 +213,21 @@ export function RentalROICalculator() {
 
             <div className="flex flex-col items-center justify-center pt-8 pb-20 border-t border-slate-200 mt-12">
               <button
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl text-[13px] font-black uppercase tracking-[0.15em] shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/60 transition-all active:scale-95 flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleDownloadPDF}
-                disabled={isExporting}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl text-[13px] font-black uppercase tracking-[0.15em] shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/60 transition-all active:scale-95 flex items-center gap-4"
+                onClick={() => setView('report')}
               >
-                {isExporting ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Generating PDF...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Download PDF Report</span>
-                  </>
-                )}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Preview Report</span>
               </button>
               <div className="mt-6 flex flex-col items-center gap-2.5">
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-md">
-                  Full 10-Year Analysis with AI Deal Rating, Key Metrics & Financial Projections
+                  Full 10-Year Analysis with Key Metrics & Financial Projections
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
-                  <span className="text-[10px] text-indigo-600 font-black tracking-widest uppercase">Ready to download</span>
+                  <span className="text-[10px] text-indigo-600 font-black tracking-widest uppercase">Preview before export</span>
                 </div>
               </div>
             </div>

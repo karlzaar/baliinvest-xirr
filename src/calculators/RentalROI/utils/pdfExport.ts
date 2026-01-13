@@ -224,7 +224,30 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
     doc.text(param.value, px, yPos + 14);
   });
 
-  yPos += paramBoxHeight + 8;
+  yPos += paramBoxHeight + 4;
+
+  // Property Readiness Notice (if applicable)
+  if (!assumptions.isPropertyReady && assumptions.propertyReadyDate) {
+    const readyDate = new Date(assumptions.propertyReadyDate + '-01');
+    const readyDateStr = readyDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    doc.setFillColor(255, 251, 235); // amber-50
+    doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, 'F');
+    doc.setDrawColor(253, 230, 138); // amber-200
+    doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, 'S');
+
+    doc.setTextColor(180, 83, 9); // amber-700
+    doc.setFontSize(FONT.sm);
+    doc.setFont('helvetica', 'bold');
+    doc.text('⏳ Property Not Ready', margin + 4, yPos + 4.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(FONT.xs);
+    doc.text(`Expected: ${readyDateStr} - Occupancy prorated accordingly`, margin + 42, yPos + 4.5);
+
+    yPos += 14;
+  } else {
+    yPos += 4;
+  }
 
   // ========================================
   // 10-YEAR PROJECTIONS TABLE

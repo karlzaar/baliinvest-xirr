@@ -97,7 +97,11 @@ export interface Assumptions {
   initialInvestment: number;
   baseYear: number;
   keys: number;
-  
+
+  // Property Readiness
+  isPropertyReady: boolean; // true = ready now, false = not ready yet
+  propertyReadyDate: string; // YYYY-MM format, when property will be ready
+
   // Year 1 Bases
   y1Occupancy: number;
   y1ADR: number;

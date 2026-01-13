@@ -109,6 +109,41 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
       {showOccupancyGrowth && (
         <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          {/* Property Readiness */}
+          <div className="mb-8 p-5 bg-slate-50 rounded-2xl border border-slate-200">
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={!assumptions.isPropertyReady}
+                  onChange={(e) => handleChange('isPropertyReady', !e.target.checked)}
+                  className="w-5 h-5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-sm font-semibold text-slate-700">Property is not ready yet</span>
+              </label>
+              <Tooltip text="Check this if the property is still under construction or not yet operational. The ready date will affect Year 1 occupancy calculations." />
+            </div>
+
+            {!assumptions.isPropertyReady && (
+              <div className="mt-4 flex items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="text-sm font-medium text-slate-600">Property Ready Date:</label>
+                <input
+                  type="month"
+                  value={assumptions.propertyReadyDate}
+                  onChange={(e) => handleChange('propertyReadyDate', e.target.value)}
+                  min={`${assumptions.baseYear || new Date().getFullYear()}-01`}
+                  max={`${(assumptions.baseYear || new Date().getFullYear()) + 10}-12`}
+                  className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                />
+                {assumptions.propertyReadyDate && (
+                  <span className="text-xs text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                    Occupancy adjusted until property is ready
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2 mb-6">
             <h4 className="text-sm font-semibold text-slate-700">Yearly Occupancy Point Increase</h4>
             <Tooltip text="Percentage points added to occupancy each year. E.g., if Y1 is 55% and Y2 increase is 4%, then Y2 occupancy becomes 59%." />

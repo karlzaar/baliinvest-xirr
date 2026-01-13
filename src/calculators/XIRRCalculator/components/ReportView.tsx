@@ -190,12 +190,12 @@ export function ReportView({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl p-5 border border-slate-200">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Total Investment</div>
-              <div className="text-2xl font-black text-slate-900">{symbol} {formatAbbrev(result.totalInvested)}</div>
+              <div className="text-2xl font-black text-slate-900">{symbol} {formatDisplay(toDisplay(result.totalInvested))}</div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-slate-200">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Net Profit</div>
               <div className={`text-2xl font-black ${result.netProfit >= 0 ? 'text-primary' : 'text-red-600'}`}>
-                {result.netProfit >= 0 ? '+' : ''}{symbol} {formatAbbrev(result.netProfit)}
+                {result.netProfit >= 0 ? '+' : ''}{symbol} {formatDisplay(toDisplay(Math.abs(result.netProfit)))}
               </div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-slate-200">

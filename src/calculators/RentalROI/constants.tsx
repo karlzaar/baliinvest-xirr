@@ -7,6 +7,9 @@ export const EMPTY_ASSUMPTIONS: Assumptions = {
   baseYear: 0,
   keys: 1,
 
+  isPropertyReady: true,
+  propertyReadyDate: '',
+
   y1Occupancy: 0,
   y1ADR: 0,
   y1FB: 0,
@@ -44,6 +47,9 @@ export const PLACEHOLDER_VALUES: Assumptions = {
   initialInvestment: 2375000000,
   baseYear: 2026,
   keys: 1,
+
+  isPropertyReady: true,
+  propertyReadyDate: '',
 
   y1Occupancy: 70,
   y1ADR: 1600000,

@@ -1,6 +1,29 @@
 
 import type { Assumptions, YearlyData } from '../types';
 
+// Calculate operational months factor for a year based on property ready date
+function getOperationalFactor(calendarYear: number, assumptions: Assumptions): number {
+  // If property is ready, full year operational
+  if (assumptions.isPropertyReady) return 1;
+
+  // If no ready date set, assume full year
+  if (!assumptions.propertyReadyDate) return 1;
+
+  // Parse ready date (format: YYYY-MM)
+  const [readyYear, readyMonth] = assumptions.propertyReadyDate.split('-').map(Number);
+
+  // If ready date is before this calendar year, full year operational
+  if (readyYear < calendarYear) return 1;
+
+  // If ready date is after this calendar year, no operations
+  if (readyYear > calendarYear) return 0;
+
+  // Ready date is within this calendar year
+  // Calculate months operational (from ready month to December)
+  const monthsOperational = 13 - readyMonth; // e.g., July (7) = 13-7 = 6 months
+  return monthsOperational / 12;
+}
+
 export function calculateProjections(assumptions: Assumptions): YearlyData[] {
   const data: YearlyData[] = [];
 
@@ -8,22 +31,36 @@ export function calculateProjections(assumptions: Assumptions): YearlyData[] {
     const calendarYear = assumptions.baseYear + i;
     const prevYear: YearlyData | null = i > 0 ? data[i - 1] : null;
 
+    // Get operational factor for this year (affects occupancy due to property readiness)
+    const operationalFactor = getOperationalFactor(calendarYear, assumptions);
+
     // Operational Metrics
     const keys = assumptions.keys;
     const occupancyIncrease = i === 0 ? 0 : (assumptions.occupancyIncreases[i - 1] ?? 0);
-    const occupancy = i === 0 ? assumptions.y1Occupancy : (prevYear?.occupancy || 0) + occupancyIncrease;
+
+    // Base occupancy calculation
+    const baseOccupancy = i === 0 ? assumptions.y1Occupancy : (prevYear?.occupancy || 0) + occupancyIncrease;
+    // Apply operational factor (prorates occupancy if property not ready full year)
+    const occupancy = baseOccupancy * operationalFactor;
+
     const adrGrowth = i === 0 ? 0 : assumptions.adrGrowth;
     const adr = i === 0 ? assumptions.y1ADR : (prevYear?.adr || 0) * (1 + adrGrowth / 100);
     
     // Key Performance Indicators
     const revpar = adr * (occupancy / 100);
     
-    // Revenue Categories
+    // Revenue Categories (prorated by operational factor when property not ready)
     const revenueRooms = keys * 365 * (occupancy / 100) * adr;
-    const revenueFB = i === 0 ? assumptions.y1FB : (prevYear?.revenueFB || 0) * (1 + assumptions.fbGrowth / 100);
-    const revenueSpa = i === 0 ? assumptions.y1Spa : (prevYear?.revenueSpa || 0) * (1 + assumptions.spaGrowth / 100);
-    const revenueOODs = i === 0 ? assumptions.y1OODs : (prevYear?.revenueOODs || 0);
-    const revenueMisc = i === 0 ? assumptions.y1Misc : (prevYear?.revenueMisc || 0);
+    const baseFB = i === 0 ? assumptions.y1FB : (prevYear?.revenueFB || 0) * (1 + assumptions.fbGrowth / 100);
+    const baseSpa = i === 0 ? assumptions.y1Spa : (prevYear?.revenueSpa || 0) * (1 + assumptions.spaGrowth / 100);
+    const baseOODs = i === 0 ? assumptions.y1OODs : (prevYear?.revenueOODs || 0);
+    const baseMisc = i === 0 ? assumptions.y1Misc : (prevYear?.revenueMisc || 0);
+
+    // Apply operational factor to non-room revenues (only for the year property becomes ready)
+    const revenueFB = baseFB * operationalFactor;
+    const revenueSpa = baseSpa * operationalFactor;
+    const revenueOODs = baseOODs * operationalFactor;
+    const revenueMisc = baseMisc * operationalFactor;
     
     const totalRevenue = revenueRooms + revenueFB + revenueSpa + revenueOODs + revenueMisc;
     const trevpar = totalRevenue / (keys * 365);
