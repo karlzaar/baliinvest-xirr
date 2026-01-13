@@ -32,8 +32,7 @@ export function Footer({ onSelectCalculator }: FooterProps) {
               </div>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Analyze property investments with comprehensive XIRR calculations, 10-year cash flow projections,
-              exit strategy analysis, and rental yield forecasting for informed investment decisions.
+              Analyze property investments with comprehensive XIRR calculations and 10-year cash flow projections for informed investment decisions.
             </p>
           </div>
 
