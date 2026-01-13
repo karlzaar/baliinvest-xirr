@@ -7,34 +7,119 @@ export interface User {
   isVerified: boolean;
 }
 
+interface StoredUser {
+  id: string;
+  email: string;
+  name: string;
+  passwordHash: string;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: User) => void;
 }
 
+const USERS_STORAGE_KEY = 'roi_registered_users';
+
+// Simple hash function for password (not cryptographically secure, but better than plaintext)
+const hashPassword = (password: string): string => {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+};
+
+const getStoredUsers = (): StoredUser[] => {
+  const stored = localStorage.getItem(USERS_STORAGE_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+const saveUser = (user: StoredUser): void => {
+  const users = getStoredUsers();
+  users.push(user);
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+};
+
+const findUser = (email: string): StoredUser | undefined => {
+  const users = getStoredUsers();
+  return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+};
+
 export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
   const [isLogin, setIsLogin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'form' | 'verifying'>('form');
+  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
 
   if (!isOpen) return null;
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    // Simulate verification process
+
     setTimeout(() => {
-      setStep('verifying');
-      setTimeout(() => {
-        onSuccess({
-          id: 'u123',
-          email: 'investor@example.com',
-          name: 'Real Estate Pro',
-          isVerified: true,
-        });
-      }, 2000);
-    }, 1000);
+      if (isLogin) {
+        // Login: validate credentials
+        const existingUser = findUser(email);
+        if (!existingUser) {
+          setError('No account found with this email. Please sign up first.');
+          setLoading(false);
+          return;
+        }
+        if (existingUser.passwordHash !== hashPassword(password)) {
+          setError('Incorrect password. Please try again.');
+          setLoading(false);
+          return;
+        }
+        // Login successful
+        setStep('verifying');
+        setTimeout(() => {
+          onSuccess({
+            id: existingUser.id,
+            email: existingUser.email,
+            name: existingUser.name,
+            isVerified: true,
+          });
+        }, 1500);
+      } else {
+        // Sign up: check if email exists
+        if (findUser(email)) {
+          setError('An account with this email already exists. Please sign in.');
+          setLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters.');
+          setLoading(false);
+          return;
+        }
+        // Create new user
+        const newUser: StoredUser = {
+          id: `u${Date.now()}`,
+          email: email,
+          name: name,
+          passwordHash: hashPassword(password),
+        };
+        saveUser(newUser);
+        setStep('verifying');
+        setTimeout(() => {
+          onSuccess({
+            id: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            isVerified: true,
+          });
+        }, 1500);
+      }
+    }, 500);
   };
 
   return (
@@ -62,27 +147,19 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             <div className="space-y-4">
-              <button className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-700 text-sm">
-                <svg className="w-5 h-5" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.13-.41-4.63H24v9.04h12.94c-.58 3.01-2.23 5.56-4.79 7.27l7.78 6.03c4.54-4.18 7.05-10.36 7.05-17.71z" />
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z" />
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.78-6.03c-2.1.41-4.47.67-8.11.67-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                </svg>
-                Continue with Google
-              </button>
-
-              <div className="flex items-center gap-4 py-2">
-                <div className="flex-1 h-px bg-slate-100"></div>
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">or email</span>
-                <div className="flex-1 h-px bg-slate-100"></div>
-              </div>
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium text-red-600">
+                  {error}
+                </div>
+              )}
 
               <form onSubmit={handleAuth} className="space-y-4">
                 <input
                   type="email"
                   placeholder="Email Address"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                 />
                 {!isLogin && (
@@ -90,13 +167,17 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
                     type="text"
                     placeholder="Full Name"
                     required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                   />
                 )}
                 <input
                   type="password"
-                  placeholder="Password"
+                  placeholder={isLogin ? "Password" : "Password (min 6 characters)"}
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                 />
 
@@ -110,7 +191,11 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
               </form>
 
               <button
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError(null);
+                  setPassword('');
+                }}
                 className="w-full text-center text-xs font-bold text-slate-400 hover:text-primary transition-colors"
               >
                 {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}

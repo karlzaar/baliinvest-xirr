@@ -34,10 +34,10 @@ export function ReportView({
 
   const toDisplay = (idr: number): number => Math.round(idr / rate);
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     setIsExporting(true);
     try {
-      generatePDFReport({
+      await generatePDFReport({
         data,
         result,
         currency,

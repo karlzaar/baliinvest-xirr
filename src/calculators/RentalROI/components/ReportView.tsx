@@ -18,10 +18,10 @@ const ReportView: React.FC<Props> = ({ data, assumptions, currency, user, onLogi
   const [showAuth, setShowAuth] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     setIsExporting(true);
     try {
-      generateRentalROIPDF({
+      await generateRentalROIPDF({
         data,
         assumptions,
         currency,
