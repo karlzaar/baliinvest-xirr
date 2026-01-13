@@ -1,8 +1,148 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Assumptions, CurrencyConfig } from '../types';
 import { PLACEHOLDER_VALUES } from '../constants';
 import { Tooltip } from '../../../components/ui/Tooltip';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+interface MonthYearPickerProps {
+  value: string; // YYYY-MM format
+  onChange: (value: string) => void;
+  minYear: number;
+  maxYear: number;
+}
+
+const MonthYearPicker: React.FC<MonthYearPickerProps> = ({ value, onChange, minYear, maxYear }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(() => {
+    if (value) {
+      const [year] = value.split('-');
+      return parseInt(year);
+    }
+    return minYear;
+  });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Parse current value
+  const currentMonth = value ? parseInt(value.split('-')[1]) - 1 : -1;
+  const currentYear = value ? parseInt(value.split('-')[0]) : -1;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMonthSelect = (monthIndex: number) => {
+    const month = String(monthIndex + 1).padStart(2, '0');
+    onChange(`${selectedYear}-${month}`);
+    setIsOpen(false);
+  };
+
+  const displayValue = value
+    ? `${MONTHS[currentMonth]} ${currentYear}`
+    : 'Select date';
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all min-w-[160px]"
+      >
+        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span className={value ? 'text-slate-900' : 'text-slate-400'}>{displayValue}</span>
+        <svg className={`w-4 h-4 text-slate-400 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-4 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Year selector */}
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <button
+              type="button"
+              onClick={() => setSelectedYear(Math.max(minYear, selectedYear - 1))}
+              disabled={selectedYear <= minYear}
+              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span className="text-lg font-bold text-slate-900">{selectedYear}</span>
+            <button
+              type="button"
+              onClick={() => setSelectedYear(Math.min(maxYear, selectedYear + 1))}
+              disabled={selectedYear >= maxYear}
+              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Month grid */}
+          <div className="grid grid-cols-4 gap-2">
+            {MONTHS.map((month, idx) => {
+              const isSelected = currentMonth === idx && currentYear === selectedYear;
+              return (
+                <button
+                  key={month}
+                  type="button"
+                  onClick={() => handleMonthSelect(idx)}
+                  className={`py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                  }`}
+                >
+                  {month}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick actions */}
+          <div className="flex justify-between mt-4 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => {
+                onChange('');
+                setIsOpen(false);
+              }}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                onChange(`${now.getFullYear()}-${month}`);
+                setIsOpen(false);
+              }}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
+              This month
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface Props {
   assumptions: Assumptions;
@@ -127,13 +267,11 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
             {!assumptions.isPropertyReady && (
               <div className="mt-4 flex items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
                 <label className="text-sm font-medium text-slate-600">Property Ready Date:</label>
-                <input
-                  type="month"
+                <MonthYearPicker
                   value={assumptions.propertyReadyDate}
-                  onChange={(e) => handleChange('propertyReadyDate', e.target.value)}
-                  min={`${assumptions.baseYear || new Date().getFullYear()}-01`}
-                  max={`${(assumptions.baseYear || new Date().getFullYear()) + 10}-12`}
-                  className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                  onChange={(value) => handleChange('propertyReadyDate', value)}
+                  minYear={assumptions.baseYear || new Date().getFullYear()}
+                  maxYear={(assumptions.baseYear || new Date().getFullYear()) + 10}
                 />
                 {assumptions.propertyReadyDate && (
                   <span className="text-xs text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
