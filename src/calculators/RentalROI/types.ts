@@ -107,7 +107,7 @@ export interface Assumptions {
   y1Misc: number;
 
   // Growth/Increases
-  occupancyIncreases: number[]; // Index 1-9 (Y2 to Y10)
+  occupancyIncreases: (number | null)[]; // Index 1-9 (Y2 to Y10), null = unset (uses placeholder)
   adrGrowth: number;
   fbGrowth: number;
   spaGrowth: number;

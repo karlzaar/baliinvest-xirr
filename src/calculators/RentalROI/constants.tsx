@@ -14,7 +14,7 @@ export const EMPTY_ASSUMPTIONS: Assumptions = {
   y1OODs: 0,
   y1Misc: 0,
 
-  occupancyIncreases: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  occupancyIncreases: [null, null, null, null, null, null, null, null, null],
   adrGrowth: 0,
   fbGrowth: 0,
   spaGrowth: 0,

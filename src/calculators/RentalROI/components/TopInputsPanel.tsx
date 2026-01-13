@@ -17,7 +17,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
     onChange({ ...assumptions, [field]: value });
   };
 
-  const handleOccupancyIncreaseChange = (index: number, value: number) => {
+  const handleOccupancyIncreaseChange = (index: number, value: number | null) => {
     const newIncreases = [...assumptions.occupancyIncreases];
     newIncreases[index] = value;
     handleChange('occupancyIncreases', newIncreases);
@@ -115,9 +115,9 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
                   <input
                     type="number"
                     step="0.5"
-                    value={val === 0 ? '0' : (val || '')}
+                    value={val === null ? '' : val}
                     placeholder={PLACEHOLDER_VALUES.occupancyIncreases[idx]?.toString() || '0'}
-                    onChange={(e) => handleOccupancyIncreaseChange(idx, e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                    onChange={(e) => handleOccupancyIncreaseChange(idx, e.target.value === '' ? null : parseFloat(e.target.value))}
                     className="w-full bg-[#fcfdfe] border border-slate-200 rounded-xl px-3 py-2 text-[13px] font-bold text-slate-900 placeholder:text-slate-300 focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">%</span>
