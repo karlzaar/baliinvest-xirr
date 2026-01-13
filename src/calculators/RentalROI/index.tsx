@@ -18,7 +18,7 @@ const DRAFT_STORAGE_KEY = 'rental_roi_draft';
 export function RentalROICalculator() {
   const [view, setView] = useState<'dashboard' | 'report'>('dashboard');
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('rental_roi_user');
+    const saved = localStorage.getItem('roi_calculate_user');
     return saved ? JSON.parse(saved) : null;
   });
   const [showAuth, setShowAuth] = useState(false);
@@ -37,9 +37,9 @@ export function RentalROICalculator() {
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('rental_roi_user', JSON.stringify(user));
+      localStorage.setItem('roi_calculate_user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('rental_roi_user');
+      localStorage.removeItem('roi_calculate_user');
     }
   }, [user]);
 

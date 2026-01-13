@@ -45,8 +45,20 @@ export function XIRRCalculator() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('roi_calculate_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [showReportView, setShowReportView] = useState(false);
+
+  // Persist user to localStorage
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('roi_calculate_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('roi_calculate_user');
+    }
+  }, [user]);
 
   const handleSaveDraft = useCallback(() => {
     setIsSaving(true);
