@@ -197,16 +197,16 @@ const ProjectionsTable: React.FC<Props> = ({ data, avg, currency }) => {
             <col className="w-[160px]" />
           </colgroup>
           <thead>
-            <tr className="border-b-2 border-slate-200 bg-slate-50/50">
-              <th className="p-4 text-sm font-semibold text-slate-800 uppercase tracking-wide sticky left-0 bg-slate-50/50 z-[20] border-r border-slate-200">
+            <tr className="border-b-2 border-slate-200 bg-slate-50">
+              <th className="p-4 text-sm font-semibold text-slate-800 uppercase tracking-wide sticky left-0 bg-slate-50 z-[30] border-r border-slate-200 shadow-[4px_0_8px_rgba(0,0,0,0.04)]">
                 Line Item Detail
               </th>
               {data.map(y => (
-                <th key={y.year} className="p-4 text-sm font-semibold text-center text-slate-700 border-b border-slate-100">
+                <th key={y.year} className="p-4 text-sm font-semibold text-center text-slate-700 bg-slate-50">
                   {y.calendarYear}
                 </th>
               ))}
-              <th className="p-4 text-sm font-semibold text-center text-slate-700 bg-indigo-50/50 border-b border-slate-100 sticky right-0 z-[10] border-l-2 border-indigo-200">
+              <th className="p-4 text-sm font-semibold text-center text-slate-700 bg-indigo-50 sticky right-0 z-[30] border-l-2 border-indigo-200 shadow-[-4px_0_8px_rgba(0,0,0,0.04)]">
                 Average
               </th>
             </tr>
@@ -217,10 +217,10 @@ const ProjectionsTable: React.FC<Props> = ({ data, avg, currency }) => {
               return (
                 <React.Fragment key={sIdx}>
                   <tr
-                    className="bg-slate-100/60 hover:bg-slate-100 transition-colors cursor-pointer border-b border-slate-200"
+                    className="bg-slate-100 hover:bg-slate-200/70 transition-colors cursor-pointer border-b border-slate-200"
                     onClick={() => toggleSection(section.title)}
                   >
-                    <td className="sticky left-0 bg-slate-100/60 hover:bg-slate-100 z-[15] p-4 border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                    <td className="sticky left-0 bg-slate-100 hover:bg-slate-200/70 z-[25] p-4 border-r border-slate-200 shadow-[4px_0_8px_rgba(0,0,0,0.04)]">
                       <div className="flex items-center gap-3">
                         <svg
                           className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
@@ -234,29 +234,29 @@ const ProjectionsTable: React.FC<Props> = ({ data, avg, currency }) => {
                       </div>
                     </td>
                     {data.map(y => (
-                      <td key={y.year} className="p-4 text-right border-b border-slate-50"></td>
+                      <td key={y.year} className="p-4 text-right bg-slate-100"></td>
                     ))}
-                    <td className="sticky right-0 bg-white p-4 border-l border-slate-200"></td>
+                    <td className="sticky right-0 bg-slate-100 p-4 border-l-2 border-slate-200 z-[25] shadow-[-4px_0_8px_rgba(0,0,0,0.04)]"></td>
                   </tr>
                   
                   {!isCollapsed && section.rows.map((row, rIdx) => (
-                    <tr 
-                      key={rIdx} 
-                      className={`group hover:bg-slate-50/20 transition-colors border-b border-slate-50/50`}
+                    <tr
+                      key={rIdx}
+                      className={`group hover:bg-slate-50 transition-colors border-b border-slate-50/50`}
                     >
-                      <td className={`sticky left-0 p-3 pl-10 z-[10] bg-white border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.01)] group-hover:bg-slate-50/20
-                        ${row.indent ? 'pl-14 text-slate-500' : 'text-slate-700'} 
+                      <td className={`sticky left-0 p-3 pl-10 z-[20] bg-white border-r border-slate-200 shadow-[4px_0_8px_rgba(0,0,0,0.04)] group-hover:bg-slate-50
+                        ${row.indent ? 'pl-14 text-slate-500' : 'text-slate-700'}
                         ${row.bold ? 'font-bold text-slate-900' : 'font-medium'}`}>
                         <div className="flex items-center gap-2">
                           {row.label}
                         </div>
                       </td>
                       {data.map(y => (
-                        <td key={y.year} className="p-3 text-right border-r border-slate-50/30">
+                        <td key={y.year} className="p-3 text-right border-r border-slate-50/30 bg-white group-hover:bg-slate-50">
                           {renderCellValue((y as any)[row.key], row.type, row.color)}
                         </td>
                       ))}
-                      <td className={`sticky right-0 p-3 text-right z-[10] bg-white border-l border-slate-200 group-hover:bg-slate-50 transition-colors
+                      <td className={`sticky right-0 p-3 text-right z-[20] bg-white border-l-2 border-slate-200 shadow-[-4px_0_8px_rgba(0,0,0,0.04)] group-hover:bg-slate-50 transition-colors
                         ${row.bold ? 'font-bold' : ''}`}>
                         {avg[row.key as keyof YearlyData] !== undefined ? renderCellValue(avg[row.key as keyof YearlyData] as number, row.type, row.color) : <span className="text-slate-300">-</span>}
                       </td>
