@@ -90,34 +90,58 @@ export function generatePaymentSchedule(data: InvestmentData): CashFlow[] {
     ? new Date(property.handoverDate)
     : purchaseDate;
 
-  // Add booking fee if set (paid before or on purchase date)
-  if (payment.bookingFee > 0) {
-    const bookingFeeDate = payment.bookingFeeDate
-      ? new Date(payment.bookingFeeDate)
-      : purchaseDate;
-    cashFlows.push({
-      date: bookingFeeDate,
-      amount: -payment.bookingFee
-    });
-  }
+  // Booking fee is part of the total price, not an additional cost
+  // It's typically paid first and deducted from the down payment
+  const bookingFee = payment.bookingFee > 0 ? payment.bookingFee : 0;
+  const bookingFeeDate = payment.bookingFeeDate
+    ? new Date(payment.bookingFeeDate)
+    : purchaseDate;
 
   if (payment.type === 'full') {
-    // Full payment upfront on purchase date
+    // Full payment upfront
     if (property.totalPrice > 0) {
-      cashFlows.push({
-        date: purchaseDate,
-        amount: -property.totalPrice
-      });
+      if (bookingFee > 0) {
+        // Add booking fee as separate cash flow on its date
+        cashFlows.push({
+          date: bookingFeeDate,
+          amount: -bookingFee
+        });
+        // Remaining amount on purchase date
+        const remainingPayment = property.totalPrice - bookingFee;
+        if (remainingPayment > 0) {
+          cashFlows.push({
+            date: purchaseDate,
+            amount: -remainingPayment
+          });
+        }
+      } else {
+        // No booking fee, full amount on purchase date
+        cashFlows.push({
+          date: purchaseDate,
+          amount: -property.totalPrice
+        });
+      }
     }
   } else {
     // Payment plan
     const downPayment = property.totalPrice * (payment.downPaymentPercent / 100);
 
-    // Down payment on purchase date (only if positive)
-    if (downPayment > 0) {
+    // Booking fee is deducted from down payment
+    const remainingDownPayment = Math.max(0, downPayment - bookingFee);
+
+    // Add booking fee as separate cash flow on its date (if any)
+    if (bookingFee > 0) {
+      cashFlows.push({
+        date: bookingFeeDate,
+        amount: -bookingFee
+      });
+    }
+
+    // Remaining down payment on purchase date (only if positive)
+    if (remainingDownPayment > 0) {
       cashFlows.push({
         date: purchaseDate,
-        amount: -downPayment
+        amount: -remainingDownPayment
       });
     }
 

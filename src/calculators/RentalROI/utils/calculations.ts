@@ -10,7 +10,7 @@ export function calculateProjections(assumptions: Assumptions): YearlyData[] {
 
     // Operational Metrics
     const keys = assumptions.keys;
-    const occupancyIncrease = i === 0 ? 0 : assumptions.occupancyIncreases[i - 1];
+    const occupancyIncrease = i === 0 ? 0 : (assumptions.occupancyIncreases[i - 1] ?? 0);
     const occupancy = i === 0 ? assumptions.y1Occupancy : (prevYear?.occupancy || 0) + occupancyIncrease;
     const adrGrowth = i === 0 ? 0 : assumptions.adrGrowth;
     const adr = i === 0 ? assumptions.y1ADR : (prevYear?.adr || 0) * (1 + adrGrowth / 100);

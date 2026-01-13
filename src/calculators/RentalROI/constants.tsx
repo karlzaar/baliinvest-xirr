@@ -14,7 +14,7 @@ export const EMPTY_ASSUMPTIONS: Assumptions = {
   y1OODs: 0,
   y1Misc: 0,
 
-  occupancyIncreases: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  occupancyIncreases: [null, null, null, null, null, null, null, null, null],
   adrGrowth: 0,
   fbGrowth: 0,
   spaGrowth: 0,
@@ -95,12 +95,40 @@ export const CURRENCIES: Record<CurrencyCode, CurrencyConfig> = {
 export const formatCurrency = (val: number, currency: CurrencyConfig) => {
   // Convert IDR value to target currency
   const converted = val / currency.rate;
-  
+
   return new Intl.NumberFormat(currency.locale, {
     style: 'currency',
     currency: currency.code,
     maximumFractionDigits: converted > 1000 ? 0 : 2,
   }).format(converted);
+};
+
+// Format with M/B abbreviations for large numbers
+export const formatCurrencyAbbrev = (val: number, currency: CurrencyConfig) => {
+  // Convert IDR value to target currency
+  const converted = val / currency.rate;
+  const abs = Math.abs(converted);
+  const sign = converted < 0 ? '-' : '';
+
+  if (currency.code === 'IDR') {
+    // IDR uses billions (B) and millions (M)
+    if (abs >= 1000000000) {
+      return `${sign}${currency.symbol} ${(abs / 1000000000).toFixed(2)}B`;
+    }
+    if (abs >= 1000000) {
+      return `${sign}${currency.symbol} ${Math.round(abs / 1000000)}M`;
+    }
+    return `${sign}${currency.symbol} ${abs.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  } else {
+    // Other currencies use millions (M) and thousands (K)
+    if (abs >= 1000000) {
+      return `${sign}${currency.symbol}${(abs / 1000000).toFixed(2)}M`;
+    }
+    if (abs >= 1000) {
+      return `${sign}${currency.symbol}${Math.round(abs / 1000)}K`;
+    }
+    return `${sign}${currency.symbol}${abs.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  }
 };
 
 export const FORMAT_PCT = new Intl.NumberFormat('en-US', {
