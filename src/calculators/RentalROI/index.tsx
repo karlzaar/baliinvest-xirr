@@ -267,9 +267,9 @@ export function RentalROICalculator() {
           <div className="lg:col-span-9 space-y-6">
             <TopInputsPanel key={resetKey} assumptions={assumptions} onChange={setAssumptions} currency={currency} />
 
-            <ProjectionsTable data={data} avg={averages} currency={currency} />
-
             <AssumptionsPanel key={`assumptions-${resetKey}`} assumptions={assumptions} onChange={setAssumptions} currency={currency} />
+
+            <ProjectionsTable data={data} avg={averages} currency={currency} />
 
             <div className="flex flex-col items-center justify-center pt-8 pb-20 border-t border-slate-200 mt-12">
               <button
