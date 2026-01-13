@@ -36,7 +36,7 @@ const DashboardHeader: React.FC<Props> = ({ data, currency }) => {
   const totalProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0);
 
   return (
-    <div className="sticky top-24 flex flex-col gap-4">
+    <div className="sticky top-8 flex flex-col gap-4">
       <Card
         title="Avg Annual Cash Flow"
         value={formatCurrency(avgProfit, currency)}
@@ -86,10 +86,10 @@ const Card: React.FC<{ title: string; value: string; label: string; tooltip?: st
     <div className="flex items-start justify-between mb-3">
       <div className="flex-1">
         <div className="flex items-center">
-          <span className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em]">{title}</span>
+          <span className="text-slate-500 text-[10px] font-semibold uppercase tracking-wide">{title}</span>
           {tooltip && <MiniTooltip text={tooltip} />}
         </div>
-        <div className={`text-xl font-[800] ${color} tracking-tight leading-none mt-1`}>{value}</div>
+        <div className={`text-xl font-bold ${color} tracking-tight leading-none mt-1.5`}>{value}</div>
       </div>
       <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center ${color} shadow-inner transition-transform group-hover:scale-110 duration-300`}>
         {icon}
@@ -97,7 +97,7 @@ const Card: React.FC<{ title: string; value: string; label: string; tooltip?: st
     </div>
     <div className="flex items-center gap-1.5">
       <div className={`w-1.5 h-1.5 rounded-full ${color.replace('text', 'bg')} opacity-60 animate-pulse`}></div>
-      <span className="text-[9px] font-[700] text-slate-400 uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{label}</span>
     </div>
   </div>
 );

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import type { Assumptions, CurrencyConfig } from '../types';
 import { PLACEHOLDER_VALUES } from '../constants';
+import { Tooltip } from '../../../components/ui/Tooltip';
 
 interface Props {
   assumptions: Assumptions;
@@ -27,7 +28,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* Core Investment Section */}
         <section className="space-y-6">
-          <h3 className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] mb-4">Core Investment</h3>
+          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wide mb-4">Core Investment</h3>
           <div className="grid grid-cols-1 gap-6">
             <TopInputGroup
               label={`Initial Capex (${currency.code})`}
@@ -37,6 +38,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               currency={currency}
               icon={currency.symbol}
               autoFocus
+              tooltip="Total capital expenditure including property purchase price, construction costs, furniture, and setup fees."
             />
             <TopInputGroup
               label="Start Year"
@@ -44,13 +46,14 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               placeholder={PLACEHOLDER_VALUES.baseYear}
               onChange={(v) => handleChange('baseYear', v)}
               noSeparator
+              tooltip="The calendar year when operations begin. Year 1 projections start from this date."
             />
           </div>
         </section>
 
         {/* Year 1 Targets Section */}
         <section className="space-y-6">
-          <h3 className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] mb-4">Year 1 Targets</h3>
+          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wide mb-4">Year 1 Targets</h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-6">
             <TopInputGroup
               label="Occupancy %"
@@ -58,6 +61,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               placeholder={PLACEHOLDER_VALUES.y1Occupancy}
               onChange={(v) => handleChange('y1Occupancy', v)}
               isPercentage
+              tooltip="Percentage of available room nights that are booked in Year 1. New properties typically start at 50-60%."
             />
             <TopInputGroup
               label={`ADR (${currency.code})`}
@@ -65,6 +69,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               placeholder={PLACEHOLDER_VALUES.y1ADR}
               onChange={(v) => handleChange('y1ADR', v)}
               currency={currency}
+              tooltip="Average Daily Rate - the average price per room night. This is your nightly rate before any discounts."
             />
             <TopInputGroup
               label="F&B Base"
@@ -72,6 +77,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               placeholder={PLACEHOLDER_VALUES.y1FB}
               onChange={(v) => handleChange('y1FB', v)}
               currency={currency}
+              tooltip="Year 1 Food & Beverage revenue from restaurant, in-room dining, and minibar services."
             />
             <TopInputGroup
               label="Wellness Base"
@@ -79,6 +85,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               placeholder={PLACEHOLDER_VALUES.y1Spa}
               onChange={(v) => handleChange('y1Spa', v)}
               currency={currency}
+              tooltip="Year 1 Spa & Wellness revenue from massage, treatments, yoga classes, and wellness packages."
             />
           </div>
 
@@ -96,18 +103,21 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
       {showOccupancyGrowth && (
         <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-          <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-6">Yearly Occupancy Point Increase</h4>
+          <div className="flex items-center gap-2 mb-6">
+            <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Yearly Occupancy Point Increase</h4>
+            <Tooltip text="Percentage points added to occupancy each year. E.g., if Y1 is 55% and Y2 increase is 4%, then Y2 occupancy becomes 59%." />
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4">
             {assumptions.occupancyIncreases.map((val, idx) => (
               <div key={idx} className="space-y-2">
-                <label className="text-[9px] font-black text-slate-600 uppercase">Y{idx + 2}</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase">Y{idx + 2}</label>
                 <div className="relative">
                   <input
                     type="number"
                     step="0.5"
-                    value={val || ''}
+                    value={val === 0 ? '0' : (val || '')}
                     placeholder={PLACEHOLDER_VALUES.occupancyIncreases[idx]?.toString() || '0'}
-                    onChange={(e) => handleOccupancyIncreaseChange(idx, parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleOccupancyIncreaseChange(idx, e.target.value === '' ? 0 : parseFloat(e.target.value))}
                     className="w-full bg-[#fcfdfe] border border-slate-200 rounded-xl px-3 py-2 text-[13px] font-bold text-slate-900 placeholder:text-slate-300 focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">%</span>
@@ -131,7 +141,8 @@ const TopInputGroup: React.FC<{
   icon?: string;
   currency?: CurrencyConfig;
   autoFocus?: boolean;
-}> = ({ label, value, placeholder, onChange, isPercentage, noSeparator, icon, currency, autoFocus }) => {
+  tooltip?: string;
+}> = ({ label, value, placeholder, onChange, isPercentage, noSeparator, icon, currency, autoFocus, tooltip }) => {
   const displayValue = currency ? (value / currency.rate) : value;
   const displayPlaceholder = currency && placeholder ? (placeholder / currency.rate) : (placeholder || 0);
   const [inputValue, setInputValue] = useState<string>(displayValue ? displayValue.toString() : '');
@@ -165,8 +176,9 @@ const TopInputGroup: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-600">
+      <label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
+        {tooltip && <Tooltip text={tooltip} />}
       </label>
       <div className="relative group">
         {icon && (
