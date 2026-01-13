@@ -125,123 +125,15 @@ export function generateRentalROIPDF(options: PDFExportOptions): void {
   doc.setTextColor(...COLORS.textDark);
   doc.setFontSize(FONT.xxl);
   doc.setFont('helvetica', 'bold');
-  doc.text(projectName || '10-Year Rental Analysis', margin, yPos);
+  doc.text('10-Year Rental Analysis', margin, yPos);
   yPos += 6;
 
   // Property details
   doc.setTextColor(...COLORS.textMedium);
   doc.setFontSize(FONT.base);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${assumptions.keys}-Key Property  |  ${formatCurrency(assumptions.initialInvestment, currency)} Investment  |  10-Year Projections`, margin, yPos);
+  doc.text(`${formatCurrency(assumptions.initialInvestment, currency)} Investment  |  10-Year Projections`, margin, yPos);
   yPos += 10;
-
-  // ========================================
-  // AI DEAL ANALYZER SECTION (XIRR style)
-  // ========================================
-  const aiCardHeight = 38;
-
-  // Compute deal rating based on avg net yield
-  const getDealRating = () => {
-    if (avgNetYield >= 15) return { grade: 'A+', label: 'Excellent', color: COLORS.primary, confidence: 92 };
-    if (avgNetYield >= 12) return { grade: 'A', label: 'Very Good', color: COLORS.primary, confidence: 85 };
-    if (avgNetYield >= 9) return { grade: 'OK', label: 'Good', color: COLORS.primary, confidence: 78 };
-    if (avgNetYield >= 6) return { grade: 'OK', label: 'Fair', color: COLORS.orange, confidence: 70 };
-    if (avgNetYield >= 3) return { grade: 'C', label: 'Below Average', color: COLORS.orange, confidence: 60 };
-    return { grade: 'D', label: 'Poor', color: COLORS.red, confidence: 50 };
-  };
-
-  const dealRating = getDealRating();
-
-  // Risk assessment
-  const riskLevel = paybackYears <= 5 ? 'Low' : paybackYears <= 8 ? 'Moderate' : 'High';
-
-  // Appreciation assessment
-  const totalGrowthPct = calcGrowth(y1Data.takeHomeProfit, y10Data.takeHomeProfit);
-  const appreciationType = totalGrowthPct >= 100 ? 'High' : totalGrowthPct >= 50 ? 'Moderate' : 'Low';
-
-  // Main card background
-  doc.setFillColor(...COLORS.cardBg);
-  doc.roundedRect(margin, yPos, contentWidth, aiCardHeight, 2, 2, 'F');
-  doc.setDrawColor(...COLORS.border);
-  doc.roundedRect(margin, yPos, contentWidth, aiCardHeight, 2, 2, 'S');
-
-  // Left section - Deal Rating box (XIRR style)
-  const ratingBoxWidth = 36;
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(margin + 4, yPos + 4, ratingBoxWidth, aiCardHeight - 8, 2, 2, 'F');
-
-  // Rating circle icon
-  doc.setFillColor(...COLORS.primary);
-  doc.circle(margin + 4 + ratingBoxWidth / 2, yPos + 12, 5, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(FONT.base);
-  doc.setFont('helvetica', 'bold');
-  doc.text(dealRating.grade.length > 2 ? 'OK' : dealRating.grade, margin + 4 + ratingBoxWidth / 2, yPos + 13.5, { align: 'center' });
-
-  // Deal rating text
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'normal');
-  doc.text('DEAL RATING', margin + 4 + ratingBoxWidth / 2, yPos + 21, { align: 'center' });
-
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(FONT.md);
-  doc.setFont('helvetica', 'bold');
-  doc.text(dealRating.label, margin + 4 + ratingBoxWidth / 2, yPos + 27, { align: 'center' });
-
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`AI Confidence: ${dealRating.confidence}%`, margin + 4 + ratingBoxWidth / 2, yPos + 32, { align: 'center' });
-
-  // Right section - Summary text
-  const summaryX = margin + ratingBoxWidth + 10;
-  const summaryWidth = contentWidth - ratingBoxWidth - 14;
-
-  doc.setTextColor(...COLORS.textDark);
-  doc.setFontSize(FONT.md);
-  doc.setFont('helvetica', 'bold');
-  const aiTitle = 'AI Deal Analyzer Summary';
-  doc.text(aiTitle, summaryX, yPos + 8);
-  const aiTitleWidth = doc.getTextWidth(aiTitle);
-
-  // BETA badge - position after title (XIRR style - light green background)
-  const betaBadgeX = summaryX + aiTitleWidth + 4;
-  doc.setFillColor(...COLORS.primaryLight);
-  doc.roundedRect(betaBadgeX, yPos + 4, 14, 5, 1, 1, 'F');
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BETA', betaBadgeX + 7, yPos + 7.5, { align: 'center' });
-
-  // AI-generated summary text
-  doc.setTextColor(...COLORS.textMedium);
-  doc.setFontSize(FONT.sm);
-  doc.setFont('helvetica', 'normal');
-  const aiSummary = `This ${assumptions.keys}-key property shows ${dealRating.label.toLowerCase()} investment potential with projected ${capPercent(avgNetYield)}% avg net yield over 10 years. With ${formatCurrency(totalProfit, currency)} total profit and ${paybackYears < 99 ? paybackYears.toFixed(1) : '10+'} year payback, this rental strategy offers ${appreciationType.toLowerCase()} appreciation potential.`;
-  const splitSummary = doc.splitTextToSize(aiSummary, summaryWidth);
-  doc.text(splitSummary.slice(0, 3), summaryX, yPos + 14);
-
-  // Tags row (XIRR style - dynamic width)
-  const tagY = yPos + aiCardHeight - 7;
-  const tags = [
-    { text: `${appreciationType} Appreciation` },
-    { text: 'Period: 10 Years' },
-    { text: `Risk: ${riskLevel}` },
-  ];
-
-  let tagX = summaryX;
-  tags.forEach(tag => {
-    const tagWidth = doc.getTextWidth(tag.text) + 6;
-    doc.setFillColor(...COLORS.background);
-    doc.roundedRect(tagX, tagY, tagWidth, 5, 1, 1, 'F');
-    doc.setTextColor(...COLORS.textMedium);
-    doc.setFontSize(FONT.xs);
-    doc.text(tag.text, tagX + 3, tagY + 3.5);
-    tagX += tagWidth + 3;
-  });
-
-  yPos += aiCardHeight + 6;
 
   // ========================================
   // KEY METRICS ROW (5 boxes)

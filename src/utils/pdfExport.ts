@@ -60,78 +60,6 @@ function truncateText(doc: jsPDF, text: string, maxWidth: number): string {
   return truncated + '...';
 }
 
-function getDealRating(xirr: number): { rating: string; confidence: number } {
-  if (xirr >= 0.25) return { rating: 'Excellent', confidence: 92 };
-  if (xirr >= 0.18) return { rating: 'Very Good', confidence: 85 };
-  if (xirr >= 0.12) return { rating: 'Good', confidence: 78 };
-  if (xirr >= 0.08) return { rating: 'Fair', confidence: 70 };
-  return { rating: 'Below Average', confidence: 60 };
-}
-
-function getMarketRisk(holdMonths: number, appreciation: number): string {
-  if (holdMonths <= 18 && appreciation <= 30) return 'Low';
-  if (holdMonths <= 30 && appreciation <= 50) return 'Moderate';
-  return 'High';
-}
-
-function generateAISummary(
-  data: InvestmentData,
-  result: XIRRResult,
-  symbol: string,
-  pricePerSqm: number
-): string {
-  const xirr = (result.rate * 100).toFixed(1);
-  const xirrNum = result.rate * 100;
-  const years = (result.holdPeriodMonths / 12).toFixed(1);
-  const months = result.holdPeriodMonths;
-  const location = data.property.location || 'the selected location';
-  const projectName = data.property.projectName || 'This property';
-  const appreciation = data.property.totalPrice > 0
-    ? ((data.exit.projectedSalesPrice - data.property.totalPrice) / data.property.totalPrice) * 100
-    : 0;
-  const totalROI = result.totalInvested > 0 ? (result.netProfit / result.totalInvested) * 100 : 0;
-  const netProfitDisplay = Math.abs(result.netProfit);
-
-  // Determine investment quality
-  let qualityDesc: string;
-  if (xirrNum >= 25) qualityDesc = 'exceptional';
-  else if (xirrNum >= 18) qualityDesc = 'strong';
-  else if (xirrNum >= 12) qualityDesc = 'solid';
-  else if (xirrNum >= 5) qualityDesc = 'moderate';
-  else if (xirrNum >= 0) qualityDesc = 'marginal';
-  else qualityDesc = 'negative';
-
-  // Determine time horizon description
-  let timeDesc: string;
-  if (months <= 12) timeDesc = 'short-term';
-  else if (months <= 24) timeDesc = 'medium-term';
-  else timeDesc = 'longer-term';
-
-  // Build summary based on actual data
-  const parts: string[] = [];
-
-  // Opening with project and return
-  if (result.netProfit >= 0) {
-    parts.push(`${projectName} in ${location} shows a ${qualityDesc} investment opportunity with a projected ${xirr}% XIRR over ${years} years.`);
-  } else {
-    parts.push(`${projectName} in ${location} currently projects a ${xirr}% return over ${years} years, indicating potential losses.`);
-  }
-
-  // Appreciation and profit details
-  if (appreciation > 0 && result.netProfit > 0) {
-    parts.push(`With ${appreciation.toFixed(1)}% appreciation and ${symbol} ${netProfitDisplay.toLocaleString()} net profit, this ${timeDesc} flip strategy yields ${totalROI.toFixed(1)}% total ROI.`);
-  } else if (appreciation <= 0) {
-    parts.push(`The projected sale price shows ${appreciation.toFixed(1)}% change from purchase, which may not cover costs.`);
-  }
-
-  // Price per sqm insight if available
-  if (pricePerSqm > 0 && data.property.propertySize > 0) {
-    parts.push(`Entry at ${symbol} ${pricePerSqm.toLocaleString()}/m² for ${data.property.propertySize}m².`);
-  }
-
-  return parts.join(' ');
-}
-
 export function generatePDFReport(options: PDFExportOptions): void {
   const { data, result, currency, symbol, rate } = options;
 
@@ -148,16 +76,11 @@ export function generatePDFReport(options: PDFExportOptions): void {
     ? Math.round(toDisplay(data.property.totalPrice) / data.property.propertySize)
     : 0;
   const totalROI = result.totalInvested > 0 ? (result.netProfit / result.totalInvested) * 100 : 0;
-  const appreciation = data.property.totalPrice > 0
-    ? ((data.exit.projectedSalesPrice - data.property.totalPrice) / data.property.totalPrice) * 100
-    : 0;
   const closingCosts = data.exit.projectedSalesPrice * (data.exit.closingCostPercent / 100);
   const netProceeds = data.exit.projectedSalesPrice - closingCosts;
   const salePricePerSqm = data.property.propertySize > 0
     ? Math.round(toDisplay(data.exit.projectedSalesPrice) / data.property.propertySize)
     : 0;
-  const dealRating = getDealRating(result.rate);
-  const marketRisk = getMarketRisk(result.holdPeriodMonths, appreciation);
   const downPayment = data.property.totalPrice * (data.payment.downPaymentPercent / 100);
   const remaining = data.property.totalPrice - downPayment;
   const monthlyPayment = data.payment.installmentMonths > 0 ? remaining / data.payment.installmentMonths : 0;
@@ -272,98 +195,6 @@ export function generatePDFReport(options: PDFExportOptions): void {
   });
 
   yPos += metricBoxHeight + 6;
-
-  // ========================================
-  // AI DEAL ANALYZER SUMMARY
-  // ========================================
-  const aiCardHeight = 38;
-  doc.setFillColor(...COLORS.cardBg);
-  doc.roundedRect(margin, yPos, contentWidth, aiCardHeight, 2, 2, 'F');
-  doc.setDrawColor(...COLORS.border);
-  doc.roundedRect(margin, yPos, contentWidth, aiCardHeight, 2, 2, 'S');
-
-  // Left section - Deal Rating
-  const ratingBoxWidth = 36;
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(margin + 4, yPos + 4, ratingBoxWidth, aiCardHeight - 8, 2, 2, 'F');
-
-  // Rating circle icon
-  doc.setFillColor(...COLORS.primary);
-  doc.circle(margin + 4 + ratingBoxWidth / 2, yPos + 12, 5, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(FONT.base);
-  doc.setFont('helvetica', 'bold');
-  doc.text('OK', margin + 4 + ratingBoxWidth / 2, yPos + 13.5, { align: 'center' });
-
-  // Deal rating text
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'normal');
-  doc.text('DEAL RATING', margin + 4 + ratingBoxWidth / 2, yPos + 21, { align: 'center' });
-
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(FONT.md);
-  doc.setFont('helvetica', 'bold');
-  doc.text(dealRating.rating, margin + 4 + ratingBoxWidth / 2, yPos + 27, { align: 'center' });
-
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`AI Confidence: ${dealRating.confidence}%`, margin + 4 + ratingBoxWidth / 2, yPos + 32, { align: 'center' });
-
-  // Right section - Summary text
-  const summaryX = margin + ratingBoxWidth + 10;
-  const summaryWidth = contentWidth - ratingBoxWidth - 14;
-
-  doc.setTextColor(...COLORS.textDark);
-  doc.setFontSize(FONT.md);
-  doc.setFont('helvetica', 'bold');
-  const aiTitle = 'AI Deal Analyzer Summary';
-  doc.text(aiTitle, summaryX, yPos + 8);
-  const aiTitleWidth = doc.getTextWidth(aiTitle);
-
-  // BETA badge - position after title with proper spacing
-  const betaBadgeX = summaryX + aiTitleWidth + 4;
-  doc.setFillColor(...COLORS.primaryLight);
-  doc.roundedRect(betaBadgeX, yPos + 4, 14, 5, 1, 1, 'F');
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(FONT.xs);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BETA', betaBadgeX + 7, yPos + 7.5, { align: 'center' });
-
-  // Summary text
-  doc.setTextColor(...COLORS.textMedium);
-  doc.setFontSize(FONT.sm);
-  doc.setFont('helvetica', 'normal');
-  const summaryText = generateAISummary(data, result, symbol, pricePerSqm);
-  const splitSummary = doc.splitTextToSize(summaryText, summaryWidth);
-  doc.text(splitSummary.slice(0, 3), summaryX, yPos + 14);
-
-  // Tags row
-  const tagY = yPos + aiCardHeight - 7;
-  const holdYears = Math.floor(result.holdPeriodMonths / 12);
-  const holdMonthsRemainder = result.holdPeriodMonths % 12;
-  const periodText = holdYears > 0
-    ? `${holdYears} Year${holdYears !== 1 ? 's' : ''}${holdMonthsRemainder > 0 ? ` ${holdMonthsRemainder} Mo` : ''}`
-    : `${holdMonthsRemainder} Months`;
-  const tags = [
-    { text: `${appreciation >= 20 ? 'High' : 'Moderate'} Appreciation` },
-    { text: `Period: ${periodText}` },
-    { text: `Risk: ${marketRisk}` },
-  ];
-
-  let tagX = summaryX;
-  tags.forEach(tag => {
-    const tagWidth = doc.getTextWidth(tag.text) + 6;
-    doc.setFillColor(...COLORS.background);
-    doc.roundedRect(tagX, tagY, tagWidth, 5, 1, 1, 'F');
-    doc.setTextColor(...COLORS.textMedium);
-    doc.setFontSize(FONT.xs);
-    doc.text(tag.text, tagX + 3, tagY + 3.5);
-    tagX += tagWidth + 3;
-  });
-
-  yPos += aiCardHeight + 6;
 
   // ========================================
   // TWO COLUMN LAYOUT
