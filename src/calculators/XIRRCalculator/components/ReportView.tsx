@@ -32,7 +32,11 @@ export function ReportView({
   const [showAuth, setShowAuth] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Helper to convert IDR to display currency (for calculations only)
   const toDisplay = (idr: number): number => Math.round(idr / rate);
+
+  // Format number with locale (for already-converted values)
+  const formatNumber = (num: number): string => num.toLocaleString('en-US');
 
   const exportPDF = async () => {
     setIsExporting(true);
@@ -190,12 +194,12 @@ export function ReportView({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl p-5 border border-slate-200">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Total Investment</div>
-              <div className="text-2xl font-black text-slate-900">{symbol} {formatDisplay(toDisplay(result.totalInvested))}</div>
+              <div className="text-2xl font-black text-slate-900">{symbol} {formatDisplay(result.totalInvested)}</div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-slate-200">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Net Profit</div>
               <div className={`text-2xl font-black ${result.netProfit >= 0 ? 'text-primary' : 'text-red-600'}`}>
-                {result.netProfit >= 0 ? '+' : ''}{symbol} {formatDisplay(toDisplay(Math.abs(result.netProfit)))}
+                {result.netProfit >= 0 ? '+' : ''}{symbol} {formatDisplay(Math.abs(result.netProfit))}
               </div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-slate-200">
@@ -221,7 +225,7 @@ export function ReportView({
             <div className="grid grid-cols-2 md:grid-cols-3 divide-x divide-y divide-slate-100">
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Purchase Price</div>
-                <div className="text-lg font-bold text-slate-900">{symbol} {formatDisplay(toDisplay(data.property.totalPrice))}</div>
+                <div className="text-lg font-bold text-slate-900">{symbol} {formatDisplay(data.property.totalPrice)}</div>
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Property Size</div>
@@ -229,11 +233,11 @@ export function ReportView({
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Price / m²</div>
-                <div className="text-lg font-bold text-slate-900">{symbol} {pricePerSqm.toLocaleString()}</div>
+                <div className="text-lg font-bold text-slate-900">{symbol} {formatNumber(pricePerSqm)}</div>
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Down Payment</div>
-                <div className="text-lg font-bold text-slate-900">{symbol} {formatDisplay(toDisplay(downPayment))} ({data.payment.downPaymentPercent}%)</div>
+                <div className="text-lg font-bold text-slate-900">{symbol} {formatDisplay(downPayment)} ({data.payment.downPaymentPercent}%)</div>
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Installments</div>
@@ -257,7 +261,7 @@ export function ReportView({
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-slate-100">
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Projected Sale</div>
-                <div className="text-lg font-bold text-slate-900">{symbol} {formatDisplay(toDisplay(data.exit.projectedSalesPrice))}</div>
+                <div className="text-lg font-bold text-slate-900">{symbol} {formatDisplay(data.exit.projectedSalesPrice)}</div>
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Appreciation</div>
@@ -267,17 +271,17 @@ export function ReportView({
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Closing Costs</div>
-                <div className="text-lg font-bold text-red-600">-{symbol} {formatDisplay(toDisplay(closingCosts))} ({data.exit.closingCostPercent}%)</div>
+                <div className="text-lg font-bold text-red-600">-{symbol} {formatDisplay(closingCosts)} ({data.exit.closingCostPercent}%)</div>
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Net Proceeds</div>
-                <div className="text-lg font-bold text-primary">{symbol} {formatDisplay(toDisplay(netProceeds))}</div>
+                <div className="text-lg font-bold text-primary">{symbol} {formatDisplay(netProceeds)}</div>
               </div>
               {data.property.propertySize > 0 && (
                 <>
                   <div className="p-5 col-span-2">
                     <div className="text-xs font-bold text-slate-400 uppercase mb-1">Sale Price / m²</div>
-                    <div className="text-lg font-bold text-slate-900">{symbol} {salePricePerSqm.toLocaleString()}</div>
+                    <div className="text-lg font-bold text-slate-900">{symbol} {formatNumber(salePricePerSqm)}</div>
                   </div>
                   <div className="p-5 col-span-2">
                     <div className="text-xs font-bold text-slate-400 uppercase mb-1">Projected Sale Date</div>
@@ -315,7 +319,7 @@ export function ReportView({
                       {item.amount < 0 ? 'Payment' : 'Sale Proceeds'}
                     </td>
                     <td className={`px-5 py-3 font-bold text-right ${item.amount < 0 ? 'text-red-600' : 'text-primary'}`}>
-                      {item.amount < 0 ? '-' : '+'}{symbol} {formatDisplay(Math.abs(toDisplay(item.amount)))}
+                      {item.amount < 0 ? '-' : '+'}{symbol} {formatDisplay(Math.abs(item.amount))}
                     </td>
                     <td className="px-5 py-3 text-right">
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.amount < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
