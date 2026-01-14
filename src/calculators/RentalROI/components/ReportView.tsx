@@ -221,10 +221,6 @@ const ReportView: React.FC<Props> = ({ data, assumptions, currency, user, onLogi
                 <div className="text-lg font-bold text-slate-900">{assumptions.adrGrowth}% p.a.</div>
               </div>
               <div className="p-5">
-                <div className="text-xs font-bold text-slate-400 uppercase mb-1">Property Keys</div>
-                <div className="text-lg font-bold text-slate-900">{assumptions.keys} Keys</div>
-              </div>
-              <div className="p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase mb-1">Incentive Fee</div>
                 <div className="text-lg font-bold text-slate-900">{assumptions.incentiveFeePct}%</div>
               </div>
