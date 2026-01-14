@@ -40,9 +40,7 @@ export function XIRRCalculator() {
     loadDraft,
   } = useInvestment();
 
-  const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<InvestmentData>('xirr');
   const [currentDraftName, setCurrentDraftName] = useState<string | undefined>();
-
   const [isSaving, setIsSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [user, setUser] = useState<User | null>(() => {
@@ -50,6 +48,9 @@ export function XIRRCalculator() {
     return saved ? JSON.parse(saved) : null;
   });
   const [showReportView, setShowReportView] = useState(false);
+
+  // Pass user ID to isolate drafts per user
+  const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<InvestmentData>('xirr', user?.id);
 
   const handleSaveDraft = useCallback(() => {
     setIsSaving(true);

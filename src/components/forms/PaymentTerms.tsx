@@ -46,7 +46,6 @@ export function PaymentTerms({
       <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
         <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
         <h2 className="text-xl font-bold text-text-primary">Payment Terms</h2>
-        <Tooltip text="Structure your payment schedule. The timing of cash outflows affects your XIRR calculation." />
       </div>
 
       {/* Payment Type Selection */}
@@ -137,9 +136,8 @@ export function PaymentTerms({
         <div className="space-y-8">
           {/* Down Payment Section */}
           <div>
-            <div className="text-sm text-text-secondary mb-2 flex items-center gap-2">
+            <div className="text-sm text-text-secondary mb-2">
               Down Payment ({downPaymentPercent}%)
-              <Tooltip text="Initial payment at contract signing. Higher down payments reduce your installment burden but tie up more capital early." />
             </div>
 
             {/* Amount Input */}
@@ -208,7 +206,6 @@ export function PaymentTerms({
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-lg">event_note</span>
                 <h3 className="font-bold text-text-primary">Payment Schedule</h3>
-                <Tooltip text="Complete schedule of all payments. Booking fee and down payment are shown first, followed by installments." />
               </div>
               <div className="flex items-center gap-2">
                 <input

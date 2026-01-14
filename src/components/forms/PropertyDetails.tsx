@@ -1,5 +1,4 @@
 import type { PropertyDetails as PropertyDetailsType } from '../../types/investment';
-import { Tooltip } from '../ui/Tooltip';
 
 interface Props {
   data: PropertyDetailsType;
@@ -43,9 +42,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Project Name */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Project Name
-            <Tooltip text="Name of the development project or villa. Used for identification on reports and documents." />
           </span>
           <input
             type="text"
@@ -58,9 +56,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
 
         {/* Location */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Location (Region)
-            <Tooltip text="Geographic area of the property. Location significantly impacts rental demand and property appreciation." />
           </span>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-lg">
@@ -82,9 +79,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
 
         {/* Total Price */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Total Price
-            <Tooltip text="Full purchase price of the property including all units. This is the total amount you will pay over time." />
           </span>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-mono">
@@ -102,9 +98,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
 
         {/* Property Size */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Property Size
-            <Tooltip text="Total building area in square meters. Used to calculate price per square meter for comparison." />
           </span>
           <div className="relative">
             <input
@@ -127,9 +122,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
 
         {/* Purchase Date */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Purchase Date
-            <Tooltip text="Date when you signed the purchase agreement. This marks the start of your investment timeline." />
           </span>
           <input
             type="date"
@@ -141,9 +135,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
 
         {/* Handover Date */}
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-text-secondary flex items-center gap-2">
+          <span className="text-sm font-medium text-text-secondary">
             Expected Handover Date
-            <Tooltip text="When the developer will hand over the completed property. This is when you can start renting or sell." />
           </span>
           <input
             type="date"

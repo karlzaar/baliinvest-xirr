@@ -60,25 +60,6 @@ function calcGrowth(y1: number, y10: number): number {
   return Math.max(-999, Math.min(999, growth));
 }
 
-// Compact currency format for PDF metrics (abbreviates large numbers)
-function formatCompactCurrency(val: number, currency: CurrencyConfig): string {
-  const converted = val / currency.rate;
-  const abs = Math.abs(converted);
-  const sign = converted < 0 ? '-' : '';
-
-  if (currency.code === 'IDR') {
-    if (abs >= 1e12) return `${sign}${currency.symbol} ${(abs / 1e12).toFixed(1)}T`;
-    if (abs >= 1e9) return `${sign}${currency.symbol} ${(abs / 1e9).toFixed(1)}B`;
-    if (abs >= 1e6) return `${sign}${currency.symbol} ${(abs / 1e6).toFixed(0)}M`;
-    return `${sign}${currency.symbol} ${abs.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  } else {
-    if (abs >= 1e9) return `${sign}${currency.symbol}${(abs / 1e9).toFixed(1)}B`;
-    if (abs >= 1e6) return `${sign}${currency.symbol}${(abs / 1e6).toFixed(1)}M`;
-    if (abs >= 1e3) return `${sign}${currency.symbol}${(abs / 1e3).toFixed(0)}K`;
-    return `${sign}${currency.symbol}${abs.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  }
-}
-
 // Helper to load image as base64
 async function loadLogoAsBase64(): Promise<string> {
   try {
@@ -192,8 +173,8 @@ export async function generateRentalROIPDF(options: PDFExportOptions): Promise<v
 
   const metrics = [
     { label: 'AVG NET YIELD', value: `${capPercent(avgNetYield)}%`, subtitle: 'Annual Return', isHighlight: true },
-    { label: '10Y NET PROFIT', value: formatCompactCurrency(totalProfit, currency), subtitle: 'Total Earnings', isHighlight: false },
-    { label: 'AVG CASH FLOW', value: formatCompactCurrency(avgProfit, currency), subtitle: 'Per Year', isHighlight: false },
+    { label: '10Y NET PROFIT', value: formatCurrency(totalProfit, currency), subtitle: 'Total Earnings', isHighlight: false },
+    { label: 'AVG CASH FLOW', value: formatCurrency(avgProfit, currency), subtitle: 'Per Year', isHighlight: false },
     { label: 'GOP MARGIN', value: `${capPercent(avgGopMargin)}%`, subtitle: 'Avg Margin', isHighlight: false },
     { label: 'PAYBACK', value: paybackYears < 99 ? `${paybackYears.toFixed(1)} Yrs` : 'N/A', subtitle: 'Recovery', isHighlight: false },
   ];
@@ -406,7 +387,7 @@ export async function generateRentalROIPDF(options: PDFExportOptions): Promise<v
   doc.text('Year 1 vs Year 10 Growth', margin, yPos);
   yPos += 5;
 
-  const compBoxHeight = 24;
+  const compBoxHeight = 28;
   doc.setFillColor(...COLORS.cardBg);
   doc.roundedRect(margin, yPos, contentWidth, compBoxHeight, 2, 2, 'F');
   doc.setDrawColor(...COLORS.border);
@@ -445,11 +426,12 @@ export async function generateRentalROIPDF(options: PDFExportOptions): Promise<v
       doc.text(`Y10: ${formatCurrency(comp.y10, currency)}`, cx, yPos + 16);
     }
 
-    // Growth percentage (capped)
+    // Growth percentage (capped) - positioned below Y10
     const growth = calcGrowth(comp.y1, comp.y10);
     doc.setTextColor(growth >= 0 ? COLORS.primary[0] : COLORS.red[0], growth >= 0 ? COLORS.primary[1] : COLORS.red[1], growth >= 0 ? COLORS.primary[2] : COLORS.red[2]);
+    doc.setFontSize(FONT.sm);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${growth >= 0 ? '+' : ''}${growth.toFixed(0)}%`, cx + compWidth - 18, yPos + 13);
+    doc.text(`Growth: ${growth >= 0 ? '+' : ''}${growth.toFixed(0)}%`, cx, yPos + 22);
   });
 
   yPos += compBoxHeight + 6;

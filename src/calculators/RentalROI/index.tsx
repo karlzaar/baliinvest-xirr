@@ -57,7 +57,8 @@ export function RentalROICalculator() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [currentDraftName, setCurrentDraftName] = useState<string | undefined>();
 
-  const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<Assumptions>('rental-roi');
+  // Pass user ID to isolate drafts per user
+  const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<Assumptions>('rental-roi', user?.id);
 
   const handleSaveDraft = useCallback(() => {
     setIsSaving(true);

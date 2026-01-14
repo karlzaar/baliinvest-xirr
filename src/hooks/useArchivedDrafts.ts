@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export interface ArchivedDraft<T> {
   id: string;
@@ -7,17 +7,28 @@ export interface ArchivedDraft<T> {
   createdAt: string;
   updatedAt: string;
   calculatorType: 'xirr' | 'rental-roi';
+  userId?: string; // Optional for backward compatibility
 }
 
 const STORAGE_KEY = 'baliinvest_archived_drafts';
 
 // Load drafts from localStorage synchronously
-function loadDraftsFromStorage<T>(calculatorType: 'xirr' | 'rental-roi'): ArchivedDraft<T>[] {
+function loadDraftsFromStorage<T>(calculatorType: 'xirr' | 'rental-roi', userId?: string): ArchivedDraft<T>[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const allDrafts: ArchivedDraft<T>[] = JSON.parse(saved);
-      return allDrafts.filter(d => d.calculatorType === calculatorType);
+      // Filter by calculator type and user ID
+      return allDrafts.filter(d => {
+        if (d.calculatorType !== calculatorType) return false;
+        // If userId is provided, only show drafts for that user
+        // If no userId (not logged in), show drafts without userId (legacy) or anonymous
+        if (userId) {
+          return d.userId === userId;
+        } else {
+          return !d.userId; // Show only anonymous/legacy drafts when not logged in
+        }
+      });
     }
   } catch (e) {
     console.error('Failed to load archived drafts:', e);
@@ -25,11 +36,17 @@ function loadDraftsFromStorage<T>(calculatorType: 'xirr' | 'rental-roi'): Archiv
   return [];
 }
 
-export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
+export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi', userId?: string) {
   // Initialize state synchronously from localStorage to prevent race conditions
   const [drafts, setDrafts] = useState<ArchivedDraft<T>[]>(() =>
-    loadDraftsFromStorage<T>(calculatorType)
+    loadDraftsFromStorage<T>(calculatorType, userId)
   );
+
+  // Re-load drafts when userId changes
+  useEffect(() => {
+    const loaded = loadDraftsFromStorage<T>(calculatorType, userId);
+    setDrafts(loaded);
+  }, [calculatorType, userId]);
 
   // Save all drafts to localStorage
   const persistDrafts = useCallback((newDrafts: ArchivedDraft<T>[]) => {
@@ -38,8 +55,16 @@ export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
       const saved = localStorage.getItem(STORAGE_KEY);
       let allDrafts: ArchivedDraft<unknown>[] = saved ? JSON.parse(saved) : [];
 
-      // Remove drafts of current calculator type
-      allDrafts = allDrafts.filter(d => d.calculatorType !== calculatorType);
+      // Remove drafts of current calculator type AND current user
+      allDrafts = allDrafts.filter(d => {
+        if (d.calculatorType !== calculatorType) return true;
+        // Keep drafts from other users
+        if (userId) {
+          return d.userId !== userId;
+        } else {
+          return d.userId; // Keep drafts that have a userId when saving anonymous
+        }
+      });
 
       // Add updated drafts
       allDrafts = [...allDrafts, ...newDrafts];
@@ -48,7 +73,7 @@ export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
     } catch (e) {
       console.error('Failed to persist drafts:', e);
     }
-  }, [calculatorType]);
+  }, [calculatorType, userId]);
 
   // Save a new draft or update existing one
   const saveDraft = useCallback((name: string, data: T, existingId?: string): ArchivedDraft<T> => {
@@ -75,6 +100,7 @@ export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
           createdAt: now,
           updatedAt: now,
           calculatorType,
+          userId,
         };
         newDrafts = [...drafts, newDraft];
       }
@@ -87,6 +113,7 @@ export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
         createdAt: now,
         updatedAt: now,
         calculatorType,
+        userId,
       };
       newDrafts = [...drafts, newDraft];
     }
@@ -94,7 +121,7 @@ export function useArchivedDrafts<T>(calculatorType: 'xirr' | 'rental-roi') {
     setDrafts(newDrafts);
     persistDrafts(newDrafts);
     return newDraft!;
-  }, [drafts, calculatorType, persistDrafts]);
+  }, [drafts, calculatorType, userId, persistDrafts]);
 
   // Delete a draft
   const deleteDraft = useCallback((id: string) => {
