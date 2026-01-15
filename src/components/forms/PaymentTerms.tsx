@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import type { PaymentTerms as PaymentTermsType, PaymentScheduleEntry } from '../../types/investment';
 import { Tooltip } from '../ui/Tooltip';
+import { parseDecimalInput, sanitizeDecimalInput } from '../../utils/numberParsing';
 
 interface Props {
   data: PaymentTermsType;
@@ -184,13 +185,18 @@ export function PaymentTerms({
                 }}
               />
               <input
-                type="number"
-                min="0"
-                max="100"
+                type="text"
+                inputMode="decimal"
                 value={downPaymentPercent}
                 onChange={(e) => {
-                  const newPercent = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                  onUpdate('downPaymentPercent', newPercent);
+                  const inputVal = sanitizeDecimalInput(e.target.value);
+                  if (inputVal === '' || inputVal === '.' || inputVal === ',') {
+                    onUpdate('downPaymentPercent', 0);
+                  } else {
+                    const num = parseDecimalInput(inputVal);
+                    const newPercent = Math.min(100, Math.max(0, isNaN(num) ? 0 : num));
+                    onUpdate('downPaymentPercent', newPercent);
+                  }
                 }}
                 className="w-16 rounded bg-surface-alt border border-border px-2 py-1.5 text-text-primary text-sm text-center font-mono focus:border-primary focus:outline-none"
               />
