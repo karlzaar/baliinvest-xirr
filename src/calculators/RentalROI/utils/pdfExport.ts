@@ -224,12 +224,20 @@ export async function generateRentalROIPDF(options: PDFExportOptions): Promise<v
   doc.setDrawColor(...COLORS.border);
   doc.roundedRect(margin, yPos, contentWidth, paramBoxHeight, 2, 2, 'S');
 
+  // Format purchase date for display
+  const formatPurchaseDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    const [year, month] = dateStr.split('-');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[parseInt(month) - 1]} ${year}`;
+  };
+
   const params = [
     { label: 'Initial Investment', value: formatCurrency(assumptions.initialInvestment, currency) },
     { label: 'Y1 Occupancy', value: `${assumptions.y1Occupancy}%` },
     { label: 'Y1 ADR', value: formatCurrency(assumptions.y1ADR, currency) },
     { label: 'ADR Growth', value: `${assumptions.adrGrowth}%` },
-    { label: 'Base Year', value: assumptions.baseYear.toString() },
+    { label: 'Purchase Date', value: formatPurchaseDate(assumptions.purchaseDate) },
   ];
 
   const paramWidth = contentWidth / 5;

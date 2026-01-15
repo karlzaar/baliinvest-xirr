@@ -24,11 +24,21 @@ function getOperationalFactor(calendarYear: number, assumptions: Assumptions): n
   return monthsOperational / 12;
 }
 
+// Helper to derive baseYear from purchaseDate
+function getBaseYear(assumptions: Assumptions): number {
+  if (assumptions.purchaseDate) {
+    const [year] = assumptions.purchaseDate.split('-').map(Number);
+    return year;
+  }
+  return new Date().getFullYear();
+}
+
 export function calculateProjections(assumptions: Assumptions): YearlyData[] {
   const data: YearlyData[] = [];
+  const baseYear = getBaseYear(assumptions);
 
   for (let i = 0; i < 10; i++) {
-    const calendarYear = assumptions.baseYear + i;
+    const calendarYear = baseYear + i;
     const prevYear: YearlyData | null = i > 0 ? data[i - 1] : null;
 
     // Get operational factor for this year (affects occupancy due to property readiness)

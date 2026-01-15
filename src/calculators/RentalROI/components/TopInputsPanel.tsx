@@ -154,13 +154,22 @@ interface Props {
 const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) => {
   const [showOccupancyGrowth, setShowOccupancyGrowth] = useState(false);
 
+  // Helper to derive baseYear from purchaseDate
+  const getBaseYear = (purchaseDate: string) => {
+    if (purchaseDate) {
+      const [year] = purchaseDate.split('-').map(Number);
+      return year;
+    }
+    return new Date().getFullYear();
+  };
+
   const handleChange = (field: keyof Assumptions, value: any) => {
     let updatedAssumptions = { ...assumptions, [field]: value };
 
     // When propertyReadyDate changes, pre-fill occupancy increases with 0 for pre-operational years
     if (field === 'propertyReadyDate' && value) {
       const [readyYear] = value.split('-').map(Number);
-      const baseYear = assumptions.baseYear || new Date().getFullYear();
+      const baseYear = getBaseYear(assumptions.purchaseDate);
 
       // Calculate which years are before the property becomes operational
       // occupancyIncreases[0] = Y2, [1] = Y3, etc.
@@ -174,10 +183,10 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
       updatedAssumptions.occupancyIncreases = newOccupancyIncreases;
     }
 
-    // When baseYear changes and propertyReadyDate is set, recalculate pre-filled zeros
-    if (field === 'baseYear' && assumptions.propertyReadyDate && !assumptions.isPropertyReady) {
+    // When purchaseDate changes and propertyReadyDate is set, recalculate pre-filled zeros
+    if (field === 'purchaseDate' && assumptions.propertyReadyDate && !assumptions.isPropertyReady) {
       const [readyYear] = assumptions.propertyReadyDate.split('-').map(Number);
-      const newBaseYear = value || new Date().getFullYear();
+      const newBaseYear = getBaseYear(value);
 
       const newOccupancyIncreases = [...assumptions.occupancyIncreases];
       for (let i = 0; i < 9; i++) {
@@ -231,14 +240,18 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               autoFocus
               tooltip="Total capital expenditure including property purchase price, construction costs, furniture, and setup fees."
             />
-            <TopInputGroup
-              label="Start Year"
-              value={assumptions.baseYear}
-              placeholder={PLACEHOLDER_VALUES.baseYear}
-              onChange={(v) => handleChange('baseYear', v)}
-              noSeparator
-              tooltip="The calendar year when operations begin. Year 1 projections start from this date."
-            />
+            <div className="space-y-2">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+                Purchase Date
+                <Tooltip text="The date when investment begins. Year 1 projections start from this year." />
+              </label>
+              <MonthYearPicker
+                value={assumptions.purchaseDate}
+                onChange={(value) => handleChange('purchaseDate', value)}
+                minYear={new Date().getFullYear() - 5}
+                maxYear={new Date().getFullYear() + 10}
+              />
+            </div>
           </div>
         </section>
 
@@ -315,8 +328,8 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
                 <MonthYearPicker
                   value={assumptions.propertyReadyDate}
                   onChange={(value) => handleChange('propertyReadyDate', value)}
-                  minYear={assumptions.baseYear || new Date().getFullYear()}
-                  maxYear={(assumptions.baseYear || new Date().getFullYear()) + 10}
+                  minYear={getBaseYear(assumptions.purchaseDate)}
+                  maxYear={getBaseYear(assumptions.purchaseDate) + 10}
                 />
                 {assumptions.propertyReadyDate && (
                   <span className="text-xs text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">

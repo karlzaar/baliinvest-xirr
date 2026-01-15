@@ -95,7 +95,7 @@ export interface YearlyData {
 
 export interface Assumptions {
   initialInvestment: number;
-  baseYear: number;
+  purchaseDate: string; // YYYY-MM format, purchase/investment start date
   keys: number;
 
   // Property Readiness

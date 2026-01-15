@@ -4,7 +4,7 @@ import type { Assumptions, CurrencyConfig, CurrencyCode } from './types';
 // Empty state for reset - all zeros
 export const EMPTY_ASSUMPTIONS: Assumptions = {
   initialInvestment: 0,
-  baseYear: 0,
+  purchaseDate: '',
   keys: 1,
 
   isPropertyReady: true,
@@ -45,7 +45,7 @@ export const EMPTY_ASSUMPTIONS: Assumptions = {
 // Example values shown as placeholders
 export const PLACEHOLDER_VALUES: Assumptions = {
   initialInvestment: 2375000000,
-  baseYear: 2026,
+  purchaseDate: '2026-01',
   keys: 1,
 
   isPropertyReady: true,
