@@ -42,6 +42,15 @@ export function PaymentTerms({
     return num.toLocaleString('en-US');
   };
 
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
   return (
     <section className="rounded-xl border border-border bg-surface p-6 shadow-sm">
       <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
@@ -262,7 +271,7 @@ export function PaymentTerms({
                             <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded">Booking Fee</span>
                           </div>
                           <div className="col-span-4 text-text-primary text-sm">
-                            {data.bookingFeeDate || 'Date not set'}
+                            {data.bookingFeeDate ? formatDate(data.bookingFeeDate) : 'Date not set'}
                           </div>
                           <div className="col-span-4 flex items-center justify-end gap-1">
                             <span className="text-text-muted text-sm">{symbol}</span>
