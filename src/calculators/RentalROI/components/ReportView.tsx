@@ -25,7 +25,7 @@ const ReportView: React.FC<Props> = ({ data, assumptions, currency, user, onLogi
         data,
         assumptions,
         currency,
-        projectName: `${assumptions.keys}-Key Property`,
+        projectName: 'Property Investment',
       });
     } catch (error) {
       console.error('PDF export error:', error);
@@ -119,7 +119,7 @@ const ReportView: React.FC<Props> = ({ data, assumptions, currency, user, onLogi
               <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">10-Year ROI Report</span>
             </div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
-              {assumptions.keys}-Key Property Investment
+              Property Investment
             </h1>
             <p className="text-slate-500 font-medium">Annualized Return Analysis</p>
           </div>

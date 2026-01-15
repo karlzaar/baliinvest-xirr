@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { Assumptions, CurrencyConfig } from '../types';
 import { PLACEHOLDER_VALUES } from '../constants';
 import { Tooltip } from '../../../components/ui/Tooltip';
+import { parseDecimalInput, sanitizeDecimalInput } from '../../../utils/numberParsing';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -154,7 +155,51 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
   const [showOccupancyGrowth, setShowOccupancyGrowth] = useState(false);
 
   const handleChange = (field: keyof Assumptions, value: any) => {
-    onChange({ ...assumptions, [field]: value });
+    let updatedAssumptions = { ...assumptions, [field]: value };
+
+    // When propertyReadyDate changes, pre-fill occupancy increases with 0 for pre-operational years
+    if (field === 'propertyReadyDate' && value) {
+      const [readyYear] = value.split('-').map(Number);
+      const baseYear = assumptions.baseYear || new Date().getFullYear();
+
+      // Calculate which years are before the property becomes operational
+      // occupancyIncreases[0] = Y2, [1] = Y3, etc.
+      const newOccupancyIncreases = [...assumptions.occupancyIncreases];
+      for (let i = 0; i < 9; i++) {
+        const yearForIndex = baseYear + i + 1; // Y2 = baseYear + 1, Y3 = baseYear + 2, etc.
+        if (yearForIndex < readyYear) {
+          newOccupancyIncreases[i] = 0;
+        }
+      }
+      updatedAssumptions.occupancyIncreases = newOccupancyIncreases;
+    }
+
+    // When baseYear changes and propertyReadyDate is set, recalculate pre-filled zeros
+    if (field === 'baseYear' && assumptions.propertyReadyDate && !assumptions.isPropertyReady) {
+      const [readyYear] = assumptions.propertyReadyDate.split('-').map(Number);
+      const newBaseYear = value || new Date().getFullYear();
+
+      const newOccupancyIncreases = [...assumptions.occupancyIncreases];
+      for (let i = 0; i < 9; i++) {
+        const yearForIndex = newBaseYear + i + 1;
+        if (yearForIndex < readyYear) {
+          newOccupancyIncreases[i] = 0;
+        } else if (assumptions.occupancyIncreases[i] === 0) {
+          // Reset previously zeroed values if they're now operational years
+          newOccupancyIncreases[i] = null;
+        }
+      }
+      updatedAssumptions.occupancyIncreases = newOccupancyIncreases;
+    }
+
+    // When isPropertyReady is set to true (checkbox unchecked), clear the pre-filled zeros
+    if (field === 'isPropertyReady' && value === true) {
+      // Reset occupancy increases to null (will use placeholders)
+      updatedAssumptions.occupancyIncreases = [null, null, null, null, null, null, null, null, null];
+      updatedAssumptions.propertyReadyDate = '';
+    }
+
+    onChange(updatedAssumptions);
   };
 
   const handleOccupancyIncreaseChange = (index: number, value: number | null) => {
@@ -197,9 +242,9 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
           </div>
         </section>
 
-        {/* Year 1 Targets Section */}
+        {/* First Operational Year Section */}
         <section className="space-y-6">
-          <h3 className="text-base font-semibold text-slate-700 mb-4">Year 1 Targets</h3>
+          <h3 className="text-base font-semibold text-slate-700 mb-4">First Operational Year</h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-6">
             <TopInputGroup
               label="Occupancy %"
@@ -292,11 +337,19 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
                 <label className="text-xs font-medium text-slate-500">Y{idx + 2}</label>
                 <div className="relative">
                   <input
-                    type="number"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
                     value={val === null ? '' : val}
                     placeholder={PLACEHOLDER_VALUES.occupancyIncreases[idx]?.toString() || '0'}
-                    onChange={(e) => handleOccupancyIncreaseChange(idx, e.target.value === '' ? null : parseFloat(e.target.value))}
+                    onChange={(e) => {
+                      const inputVal = sanitizeDecimalInput(e.target.value);
+                      if (inputVal === '' || inputVal === '.' || inputVal === ',') {
+                        handleOccupancyIncreaseChange(idx, null);
+                      } else {
+                        const num = parseDecimalInput(inputVal);
+                        handleOccupancyIncreaseChange(idx, isNaN(num) ? null : num);
+                      }
+                    }}
                     className="w-full bg-[#fcfdfe] border border-slate-200 rounded-xl px-3 py-2 text-[13px] font-bold text-slate-900 placeholder:text-slate-300 focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">%</span>
@@ -338,13 +391,23 @@ const TopInputGroup: React.FC<{
   }, [displayValue, isPercentage, noSeparator]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/,/g, '');
-    setInputValue(e.target.value);
-    const num = parseFloat(rawValue);
+    const inputVal = e.target.value;
+    setInputValue(inputVal);
+
+    // For percentage/noSeparator fields, allow comma as decimal separator
+    // For currency fields, comma is thousands separator and should be removed
+    let num: number;
+    if (isPercentage || noSeparator) {
+      num = parseDecimalInput(inputVal);
+    } else {
+      const rawValue = inputVal.replace(/,/g, '');
+      num = parseFloat(rawValue);
+    }
+
     if (!isNaN(num)) {
       const modelValue = currency ? (num * currency.rate) : num;
       onChange(modelValue);
-    } else if (rawValue === '') {
+    } else if (inputVal === '' || inputVal === ',' || inputVal === '.') {
       onChange(0);
     }
   };

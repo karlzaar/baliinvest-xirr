@@ -1,4 +1,5 @@
 import type { ExitStrategy as ExitStrategyData } from '../../types/investment';
+import { parseDecimalInput, sanitizeDecimalInput } from '../../utils/numberParsing';
 
 interface Props {
   data: ExitStrategyData;
@@ -132,11 +133,11 @@ export function ExitStrategySection({
                 inputMode="decimal"
                 value={data.closingCostPercent}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9.]/g, '');
-                  const num = parseFloat(val);
+                  const val = sanitizeDecimalInput(e.target.value);
+                  const num = parseDecimalInput(val);
                   if (!isNaN(num) && num >= 0 && num <= 20) {
                     onUpdate('closingCostPercent', num);
-                  } else if (val === '' || val === '.') {
+                  } else if (val === '' || val === '.' || val === ',') {
                     onUpdate('closingCostPercent', 0);
                   }
                 }}

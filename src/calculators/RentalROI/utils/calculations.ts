@@ -43,8 +43,31 @@ export function calculateProjections(assumptions: Assumptions): YearlyData[] {
     // Apply operational factor (prorates occupancy if property not ready full year)
     const occupancy = baseOccupancy * operationalFactor;
 
-    const adrGrowth = i === 0 ? 0 : assumptions.adrGrowth;
-    const adr = i === 0 ? assumptions.y1ADR : (prevYear?.adr || 0) * (1 + adrGrowth / 100);
+    // ADR only grows from the first operational year
+    // For pre-operational years, ADR stays at base value with no growth
+    const isOperational = operationalFactor > 0;
+    const wasOperationalLastYear = prevYear ? getOperationalFactor(calendarYear - 1, assumptions) > 0 : false;
+
+    let adr: number;
+    let adrGrowth: number;
+
+    if (i === 0) {
+      // Year 1: use base ADR, no growth
+      adr = assumptions.y1ADR;
+      adrGrowth = 0;
+    } else if (!isOperational) {
+      // Pre-operational years: keep base ADR, no growth applied
+      adr = assumptions.y1ADR;
+      adrGrowth = 0;
+    } else if (!wasOperationalLastYear) {
+      // First operational year: use base ADR, no growth yet
+      adr = assumptions.y1ADR;
+      adrGrowth = 0;
+    } else {
+      // Subsequent operational years: apply growth
+      adrGrowth = assumptions.adrGrowth;
+      adr = (prevYear?.adr || assumptions.y1ADR) * (1 + adrGrowth / 100);
+    }
     
     // Key Performance Indicators
     const revpar = adr * (occupancy / 100);

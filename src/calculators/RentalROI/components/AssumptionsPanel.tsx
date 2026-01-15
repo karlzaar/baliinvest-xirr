@@ -2,6 +2,7 @@
 import type { Assumptions, CurrencyConfig } from '../types';
 import { PLACEHOLDER_VALUES } from '../constants';
 import { Tooltip } from '../../../components/ui/Tooltip';
+import { parseDecimalInput, sanitizeDecimalInput } from '../../../utils/numberParsing';
 
 interface Props {
   assumptions: Assumptions;
@@ -105,11 +106,19 @@ const SecondaryInput: React.FC<{
       </label>
       <div className="relative group">
         <input
-          type="number"
-          step="0.1"
+          type="text"
+          inputMode="decimal"
           value={value || ''}
           placeholder={placeholder?.toString() || '0'}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          onChange={(e) => {
+            const inputVal = sanitizeDecimalInput(e.target.value);
+            if (inputVal === '' || inputVal === '.' || inputVal === ',') {
+              onChange(0);
+            } else {
+              const num = parseDecimalInput(inputVal);
+              onChange(isNaN(num) ? 0 : num);
+            }
+          }}
           className="w-full bg-[#fcfdfe] border border-slate-200 rounded-2xl px-6 py-5 text-[17px] font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 focus:bg-white transition-all tabular-nums"
         />
         {isPercentage && (

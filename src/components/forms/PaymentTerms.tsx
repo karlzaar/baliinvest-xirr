@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import type { PaymentTerms as PaymentTermsType, PaymentScheduleEntry } from '../../types/investment';
 import { Tooltip } from '../ui/Tooltip';
+import { parseDecimalInput, sanitizeDecimalInput } from '../../utils/numberParsing';
 
 interface Props {
   data: PaymentTermsType;
@@ -39,6 +40,15 @@ export function PaymentTerms({
 
   const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US');
+  };
+
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
   };
 
   return (
@@ -184,13 +194,18 @@ export function PaymentTerms({
                 }}
               />
               <input
-                type="number"
-                min="0"
-                max="100"
+                type="text"
+                inputMode="decimal"
                 value={downPaymentPercent}
                 onChange={(e) => {
-                  const newPercent = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                  onUpdate('downPaymentPercent', newPercent);
+                  const inputVal = sanitizeDecimalInput(e.target.value);
+                  if (inputVal === '' || inputVal === '.' || inputVal === ',') {
+                    onUpdate('downPaymentPercent', 0);
+                  } else {
+                    const num = parseDecimalInput(inputVal);
+                    const newPercent = Math.min(100, Math.max(0, isNaN(num) ? 0 : num));
+                    onUpdate('downPaymentPercent', newPercent);
+                  }
                 }}
                 className="w-16 rounded bg-surface-alt border border-border px-2 py-1.5 text-text-primary text-sm text-center font-mono focus:border-primary focus:outline-none"
               />
@@ -256,7 +271,7 @@ export function PaymentTerms({
                             <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded">Booking Fee</span>
                           </div>
                           <div className="col-span-4 text-text-primary text-sm">
-                            {data.bookingFeeDate || 'Date not set'}
+                            {data.bookingFeeDate ? formatDate(data.bookingFeeDate) : 'Date not set'}
                           </div>
                           <div className="col-span-4 flex items-center justify-end gap-1">
                             <span className="text-text-muted text-sm">{symbol}</span>
