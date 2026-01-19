@@ -72,6 +72,12 @@ export function calculateProjections(assumptions: Assumptions): YearlyData[] {
   const data: YearlyData[] = [];
   const baseYear = getBaseYear(assumptions);
 
+  // Track unprorated base values for growth calculations (not affected by operational factor)
+  let prevUnproratedFB = 0;
+  let prevUnproratedSpa = 0;
+  let prevUnproratedOODs = 0;
+  let prevUnproratedMisc = 0;
+
   for (let i = 0; i < 10; i++) {
     const calendarYear = baseYear + i;
     const prevYear: YearlyData | null = i > 0 ? data[i - 1] : null;
@@ -115,16 +121,24 @@ export function calculateProjections(assumptions: Assumptions): YearlyData[] {
     
     // Revenue Categories (prorated by operational factor when property not ready)
     const revenueRooms = keys * 365 * (occupancy / 100) * adr;
-    const baseFB = i === 0 ? assumptions.y1FB : (prevYear?.revenueFB || 0) * (1 + assumptions.fbGrowth / 100);
-    const baseSpa = i === 0 ? assumptions.y1Spa : (prevYear?.revenueSpa || 0) * (1 + assumptions.spaGrowth / 100);
-    const baseOODs = i === 0 ? assumptions.y1OODs : (prevYear?.revenueOODs || 0);
-    const baseMisc = i === 0 ? assumptions.y1Misc : (prevYear?.revenueMisc || 0);
+
+    // Calculate unprorated base values for this year (used for growth and display)
+    const unproratedFB = i === 0 ? assumptions.y1FB : prevUnproratedFB * (1 + assumptions.fbGrowth / 100);
+    const unproratedSpa = i === 0 ? assumptions.y1Spa : prevUnproratedSpa * (1 + assumptions.spaGrowth / 100);
+    const unproratedOODs = i === 0 ? assumptions.y1OODs : prevUnproratedOODs;
+    const unproratedMisc = i === 0 ? assumptions.y1Misc : prevUnproratedMisc;
 
     // Apply operational factor to non-room revenues (only for the year property becomes ready)
-    const revenueFB = baseFB * operationalFactor;
-    const revenueSpa = baseSpa * operationalFactor;
-    const revenueOODs = baseOODs * operationalFactor;
-    const revenueMisc = baseMisc * operationalFactor;
+    const revenueFB = unproratedFB * operationalFactor;
+    const revenueSpa = unproratedSpa * operationalFactor;
+    const revenueOODs = unproratedOODs * operationalFactor;
+    const revenueMisc = unproratedMisc * operationalFactor;
+
+    // Store unprorated values for next year's growth calculation
+    prevUnproratedFB = unproratedFB;
+    prevUnproratedSpa = unproratedSpa;
+    prevUnproratedOODs = unproratedOODs;
+    prevUnproratedMisc = unproratedMisc;
     
     const totalRevenue = revenueRooms + revenueFB + revenueSpa + revenueOODs + revenueMisc;
     const trevpar = totalRevenue / (keys * 365);

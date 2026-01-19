@@ -391,17 +391,30 @@ const TopInputGroup: React.FC<{
   const displayValue = currency ? (value / currency.rate) : value;
   const displayPlaceholder = currency && placeholder ? (placeholder / currency.rate) : (placeholder || 0);
   const [inputValue, setInputValue] = useState<string>(displayValue ? displayValue.toString() : '');
+  const [isFocused, setIsFocused] = useState(false);
+  const lastValueRef = useRef<number>(value);
 
+  // Only sync from props when value changes externally (not from user typing)
+  // This prevents the useEffect from overwriting user input during typing
   useEffect(() => {
+    // Skip if user is actively typing (focused) and this is our own change
+    if (isFocused && value === lastValueRef.current) {
+      return;
+    }
+    lastValueRef.current = value;
+
     if (displayValue === 0 || !displayValue) {
       setInputValue('');
     } else {
       const formatted = (isPercentage || noSeparator)
         ? displayValue.toString()
         : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(displayValue);
-      setInputValue(formatted);
+      // Only apply formatting if not focused (user not typing)
+      if (!isFocused) {
+        setInputValue(formatted);
+      }
     }
-  }, [displayValue, isPercentage, noSeparator]);
+  }, [displayValue, isPercentage, noSeparator, isFocused, value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputVal = e.target.value;
@@ -412,9 +425,24 @@ const TopInputGroup: React.FC<{
 
     if (!isNaN(num)) {
       const modelValue = currency ? (num * currency.rate) : num;
+      lastValueRef.current = modelValue;
       onChange(modelValue);
     } else if (inputVal === '' || inputVal === ',' || inputVal === '.') {
+      lastValueRef.current = 0;
       onChange(0);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    // Format the number on blur for nice display
+    if (displayValue === 0 || !displayValue) {
+      setInputValue('');
+    } else {
+      const formatted = (isPercentage || noSeparator)
+        ? displayValue.toString()
+        : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(displayValue);
+      setInputValue(formatted);
     }
   };
 
@@ -437,6 +465,8 @@ const TopInputGroup: React.FC<{
           value={inputValue}
           placeholder={placeholderText}
           onChange={handleInputChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={handleBlur}
           autoFocus={autoFocus}
           className="w-full bg-[#fcfdfe] border border-slate-200 rounded-2xl py-4 text-[16px] font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] transition-all tabular-nums"
           style={{ paddingLeft: icon ? '2.75rem' : '1.25rem', paddingRight: '1rem' }}
