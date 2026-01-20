@@ -61,7 +61,7 @@ export const PLACEHOLDER_VALUES: Assumptions = {
   occupancyIncreases: [4, 3, 2, 1.5, 1.5, 1, 1, 1, 1],
   adrGrowth: 4,
   fbGrowth: 3,
-  spaGrowth: 0,
+  spaGrowth: 4,
   camGrowth: 2,
   baseFeeGrowth: 3,
   techFeeGrowth: 3,

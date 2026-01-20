@@ -65,9 +65,13 @@ const AssumptionsPanel = ({ assumptions, onChange, currency }: Props) => {
               Annual Growth Rates (% p.a.)
             </h3>
           </div>
-          <div className="grid grid-cols-2 gap-x-12 gap-y-10">
+          <div className="grid grid-cols-3 gap-x-8 gap-y-10">
             <SecondaryInput label="ADR Growth" value={assumptions.adrGrowth} placeholder={PLACEHOLDER_VALUES.adrGrowth} onChange={(v) => handleChange('adrGrowth', v)} isPercentage tooltip="Annual rate increase for room rates. Typically 3-6% in growing markets like Bali." />
-            <SecondaryInput label="Fee Growth" value={assumptions.baseFeeGrowth} placeholder={PLACEHOLDER_VALUES.baseFeeGrowth} onChange={(v) => handleChange('baseFeeGrowth', v)} isPercentage tooltip="Annual increase in management fees (CAM, Base, Tech). Usually tied to inflation (3-5%)." />
+            <SecondaryInput label="F&B Growth" value={assumptions.fbGrowth} placeholder={PLACEHOLDER_VALUES.fbGrowth} onChange={(v) => handleChange('fbGrowth', v)} isPercentage tooltip="Annual growth rate for Food & Beverage revenue. Typically 2-4%." />
+            <SecondaryInput label="Wellness Growth" value={assumptions.spaGrowth} placeholder={PLACEHOLDER_VALUES.spaGrowth} onChange={(v) => handleChange('spaGrowth', v)} isPercentage tooltip="Annual growth rate for Spa/Wellness revenue. Typically 2-5%." />
+            <SecondaryInput label="CAM Growth" value={assumptions.camGrowth} placeholder={PLACEHOLDER_VALUES.camGrowth} onChange={(v) => handleChange('camGrowth', v)} isPercentage tooltip="Annual increase in CAM (Common Area Maintenance) fees. Usually 2-3%." />
+            <SecondaryInput label="Base Fee Growth" value={assumptions.baseFeeGrowth} placeholder={PLACEHOLDER_VALUES.baseFeeGrowth} onChange={(v) => handleChange('baseFeeGrowth', v)} isPercentage tooltip="Annual increase in base management fee. Usually tied to inflation (2-4%)." />
+            <SecondaryInput label="Tech Fee Growth" value={assumptions.techFeeGrowth} placeholder={PLACEHOLDER_VALUES.techFeeGrowth} onChange={(v) => handleChange('techFeeGrowth', v)} isPercentage tooltip="Annual increase in technology/platform fee. Usually 2-4%." />
           </div>
         </section>
 

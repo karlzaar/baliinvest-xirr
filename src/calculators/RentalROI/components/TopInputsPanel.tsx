@@ -240,16 +240,26 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
               autoFocus
               tooltip="Total capital expenditure including property purchase price, construction costs, furniture, and setup fees."
             />
-            <div className="space-y-2">
-              <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
-                Purchase Date
-                <Tooltip text="The date when investment begins. Year 1 projections start from this year." />
-              </label>
-              <MonthYearPicker
-                value={assumptions.purchaseDate}
-                onChange={(value) => handleChange('purchaseDate', value)}
-                minYear={new Date().getFullYear() - 5}
-                maxYear={new Date().getFullYear() + 10}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+                  Purchase Date
+                  <Tooltip text="The date when investment begins. Year 1 projections start from this year." />
+                </label>
+                <MonthYearPicker
+                  value={assumptions.purchaseDate}
+                  onChange={(value) => handleChange('purchaseDate', value)}
+                  minYear={new Date().getFullYear() - 5}
+                  maxYear={new Date().getFullYear() + 10}
+                />
+              </div>
+              <TopInputGroup
+                label="Keys (Units)"
+                value={assumptions.keys}
+                placeholder={PLACEHOLDER_VALUES.keys}
+                onChange={(v) => handleChange('keys', Math.max(1, Math.round(v)))}
+                noSeparator
+                tooltip="Number of rental units/keys in the property. Used to calculate room revenue and per-unit fees."
               />
             </div>
           </div>
