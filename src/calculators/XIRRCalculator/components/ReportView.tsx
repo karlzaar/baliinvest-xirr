@@ -108,6 +108,44 @@ export function ReportView({
   const downPayment = data.property.totalPrice * (data.payment.downPaymentPercent / 100);
   const schedule = generatePaymentSchedule(data);
 
+  // Build labeled cash flow rows (same logic as PDF)
+  const cashFlowRows = (() => {
+    const outflows = schedule.filter(cf => cf.amount < 0);
+    const inflows = schedule.filter(cf => cf.amount > 0);
+    const bookingFeeIDR = data.payment.bookingFee;
+    const bookingFeeDate = data.payment.bookingFeeDate ? new Date(data.payment.bookingFeeDate) : null;
+    let downPaymentFound = false;
+    let installmentNum = 0;
+
+    const rows: { date: Date; label: string; amount: number }[] = [];
+
+    outflows.forEach((cf) => {
+      const cfAmount = Math.abs(cf.amount);
+      const isBookingFee = bookingFeeIDR > 0 &&
+        Math.abs(cfAmount - bookingFeeIDR) < 1 &&
+        (!bookingFeeDate || cf.date.toDateString() === bookingFeeDate.toDateString());
+
+      let label: string;
+      if (isBookingFee && !downPaymentFound) {
+        label = 'Booking Fee';
+      } else if (!downPaymentFound) {
+        label = 'Down Payment';
+        downPaymentFound = true;
+      } else {
+        installmentNum++;
+        label = `Installment ${installmentNum}`;
+      }
+      rows.push({ date: cf.date, label, amount: cf.amount });
+    });
+
+    inflows.forEach((cf) => {
+      rows.push({ date: cf.date, label: 'Total Sale Price', amount: data.exit.projectedSalesPrice });
+      rows.push({ date: cf.date, label: 'Closing Costs', amount: -closingCosts });
+    });
+
+    return rows;
+  })();
+
   // Investment rating
   const getInvestmentRating = () => {
     const xirr = result.rate * 100;
@@ -336,28 +374,28 @@ export function ReportView({
                 </tr>
               </thead>
               <tbody>
-                {schedule.slice(0, 8).map((item, i) => (
+                {cashFlowRows.slice(0, 8).map((row, i) => (
                   <tr key={i} className="border-b border-slate-100">
                     <td className="px-5 py-3 font-medium">
-                      {item.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {row.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="px-5 py-3 text-slate-600">
-                      {item.amount < 0 ? 'Payment' : 'Sale Proceeds'}
+                      {row.label}
                     </td>
-                    <td className={`px-5 py-3 font-bold text-right ${item.amount < 0 ? 'text-red-600' : 'text-primary'}`}>
-                      {item.amount < 0 ? '-' : '+'}{symbol} {formatDisplay(Math.abs(item.amount))}
+                    <td className={`px-5 py-3 font-bold text-right ${row.amount < 0 ? 'text-red-600' : 'text-primary'}`}>
+                      {row.amount < 0 ? '-' : '+'}{symbol} {formatDisplay(Math.abs(row.amount))}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.amount < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                        {item.amount < 0 ? 'Outflow' : 'Inflow'}
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.amount < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                        {row.amount < 0 ? 'Outflow' : 'Inflow'}
                       </span>
                     </td>
                   </tr>
                 ))}
-                {schedule.length > 8 && (
+                {cashFlowRows.length > 8 && (
                   <tr className="bg-slate-50">
                     <td colSpan={4} className="px-5 py-3 text-center text-slate-500 text-sm font-medium">
-                      + {schedule.length - 8} more entries in full PDF report
+                      + {cashFlowRows.length - 8} more entries in full PDF report
                     </td>
                   </tr>
                 )}
