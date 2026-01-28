@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { PropertyDetails as PropertyDetailsType } from '../../types/investment';
 
 interface Props {
@@ -25,22 +26,33 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
     return parseInt(digits, 10) || 0;
   };
 
-  // Parse decimal input: treat comma as decimal separator (e.g. 50,4 → 50.4)
-  const parseDecimalInput = (value: string): number => {
-    const cleaned = value.replace(',', '.');
-    return parseFloat(cleaned) || 0;
+  // Local state for property size input so comma persists while typing
+  const [sizeInput, setSizeInput] = useState(
+    data.propertySize > 0 ? String(data.propertySize).replace('.', ',') : ''
+  );
+
+  // Sync from parent if value changes externally (e.g. draft load)
+  useEffect(() => {
+    const current = parseFloat(sizeInput.replace(',', '.')) || 0;
+    if (current !== data.propertySize) {
+      setSizeInput(data.propertySize > 0 ? String(data.propertySize).replace('.', ',') : '');
+    }
+  }, [data.propertySize]);
+
+  const handleSizeChange = (value: string) => {
+    // Only allow digits and one comma
+    const filtered = value.replace(/[^0-9,]/g, '');
+    // Prevent multiple commas
+    const parts = filtered.split(',');
+    const sanitized = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : filtered;
+    setSizeInput(sanitized);
+    const num = parseFloat(sanitized.replace(',', '.')) || 0;
+    onUpdate('propertySize', num);
   };
 
   // Format number with commas
   const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US');
-  };
-
-  // Format with comma as decimal separator (e.g. 50.4 → "50,4")
-  const formatDecimal = (num: number): string => {
-    if (num === 0) return '';
-    if (num % 1 === 0) return String(num);
-    return String(num).replace('.', ',');
   };
 
   return (
@@ -117,8 +129,8 @@ export function PropertyDetails({ data, symbol, displayPrice, onUpdate, onPriceC
           <div className="relative">
             <input
               type="text"
-              value={data.propertySize > 0 ? formatDecimal(data.propertySize) : ''}
-              onChange={(e) => onUpdate('propertySize', parseDecimalInput(e.target.value))}
+              value={sizeInput}
+              onChange={(e) => handleSizeChange(e.target.value)}
               placeholder="100"
               className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 pr-12 text-text-primary font-mono placeholder:text-text-muted focus:border-primary focus:outline-none"
             />
