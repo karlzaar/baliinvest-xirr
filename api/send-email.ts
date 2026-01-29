@@ -22,7 +22,7 @@ export default async function handler(request: Request) {
       });
     }
 
-    const fromAddress = process.env.POSTMARK_FROM_EMAIL || 'reports@roicalculate.com';
+    const fromAddress = process.env.POSTMARK_FROM_EMAIL || 'reports@investlandgroup.com';
 
     const response = await fetch('https://api.postmarkapp.com/email', {
       method: 'POST',
