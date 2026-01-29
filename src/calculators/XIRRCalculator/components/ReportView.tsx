@@ -41,7 +41,8 @@ export function ReportView({
   // Format number with locale (for already-converted values)
   const formatNumber = (num: number): string => num.toLocaleString('en-US');
 
-  const exportPDF = async () => {
+  const exportPDF = async (userEmail?: string) => {
+    const emailToUse = userEmail || user?.email;
     setIsExporting(true);
     try {
       const { pdfBase64, fileName } = await generatePDFReport({
@@ -55,15 +56,15 @@ export function ReportView({
       });
 
       // Send PDF to user's email
-      if (user?.email) {
+      if (emailToUse) {
         sendPDFByEmail({
-          email: user.email,
+          email: emailToUse,
           pdfBase64,
           fileName,
           reportType: 'XIRR Investment',
         }).then((success) => {
           if (success) {
-            setToast({ message: `Report sent to ${user.email}`, type: 'success' });
+            setToast({ message: `Report sent to ${emailToUse}`, type: 'success' });
           } else {
             setToast({ message: 'PDF downloaded. Email delivery failed.', type: 'error' });
           }
@@ -87,8 +88,9 @@ export function ReportView({
   const handleAuthSuccess = (u: User) => {
     onLogin(u);
     setShowAuth(false);
+    // Pass user email directly to ensure it's used
     setTimeout(() => {
-      exportPDF();
+      exportPDF(u.email);
     }, 500);
   };
 
