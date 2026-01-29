@@ -10,7 +10,7 @@ export default async function handler(request: Request) {
     });
   }
 
-  const apiKey = process.env.RESEND_API_KEY || 're_jDiA52Nb_FLN6sGLTTzNCy2PntoeSfUmz';
+  const apiToken = process.env.POSTMARK_API_TOKEN || 'afe358ea-c1ad-48fa-96f0-fdd0e7c3ec26';
 
   try {
     const { email, pdfBase64, fileName, reportType } = await request.json();
@@ -22,19 +22,20 @@ export default async function handler(request: Request) {
       });
     }
 
-    const fromAddress = process.env.RESEND_FROM_EMAIL || 'ROI Calculate <reports@roicalculate.com>';
+    const fromAddress = process.env.POSTMARK_FROM_EMAIL || 'reports@roicalculate.com';
 
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.postmarkapp.com/email', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'X-Postmark-Server-Token': apiToken,
       },
       body: JSON.stringify({
-        from: fromAddress,
-        to: [email],
-        subject: `Your ${reportType || 'Investment'} Report - ROI Calculate`,
-        html: `
+        From: fromAddress,
+        To: email,
+        Subject: `Your ${reportType || 'Investment'} Report - ROI Calculate`,
+        HtmlBody: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
             <div style="text-align: center; margin-bottom: 32px;">
               <h1 style="color: #0f172a; font-size: 24px; margin-bottom: 8px;">Your Investment Report</h1>
@@ -50,10 +51,11 @@ export default async function handler(request: Request) {
             </p>
           </div>
         `,
-        attachments: [
+        Attachments: [
           {
-            filename: fileName,
-            content: pdfBase64,
+            Name: fileName,
+            Content: pdfBase64,
+            ContentType: 'application/pdf',
           },
         ],
       }),
@@ -62,7 +64,7 @@ export default async function handler(request: Request) {
     const data = await response.json();
 
     if (response.ok) {
-      return new Response(JSON.stringify({ success: true, id: data.id }), {
+      return new Response(JSON.stringify({ success: true, id: data.MessageID }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
