@@ -1,18 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { loginSchema, registerSchema, waitlistSchema, formatZodErrors, type ValidationError } from '../../lib/validations';
+import { checkPasswordStrength, type PasswordStrength } from '../../lib/crypto-utils';
+import { authRateLimiter, waitlistRateLimiter } from '../../lib/rate-limit';
+import { registerUser, loginUser, addToWaitlist, type User } from '../../lib/auth-store';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  isVerified: boolean;
-}
-
-interface StoredUser {
-  id: string;
-  email: string;
-  name: string;
-  passwordHash: string;
-}
+// Re-export User type for consumers
+export type { User };
 
 interface Props {
   isOpen: boolean;
@@ -20,313 +13,594 @@ interface Props {
   onSuccess: (user: User) => void;
 }
 
-const USERS_STORAGE_KEY = 'roi_registered_users';
-const WAITLIST_STORAGE_KEY = 'roi_waitlist';
-
-// Simple hash function for password (not cryptographically secure, but better than plaintext)
-const hashPassword = (password: string): string => {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(36);
-};
-
-const getStoredUsers = (): StoredUser[] => {
-  const stored = localStorage.getItem(USERS_STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-};
-
-const saveUser = (user: StoredUser): void => {
-  const users = getStoredUsers();
-  users.push(user);
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-};
-
-const findUser = (email: string): StoredUser | undefined => {
-  const users = getStoredUsers();
-  return users.find(u => u.email.toLowerCase() === email.toLowerCase());
-};
-
-const saveToWaitlist = (email: string): void => {
-  const stored = localStorage.getItem(WAITLIST_STORAGE_KEY);
-  const waitlist: string[] = stored ? JSON.parse(stored) : [];
-  if (!waitlist.includes(email.toLowerCase())) {
-    waitlist.push(email.toLowerCase());
-    localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(waitlist));
-  }
-};
+type AuthMode = 'login' | 'signup' | 'waitlist';
+type AuthStep = 'form' | 'processing' | 'success' | 'waitlist-success';
 
 export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
-  const [mode, setMode] = useState<'signup' | 'login' | 'waitlist'>('signup');
+  const [mode, setMode] = useState<AuthMode>('signup');
+  const [step, setStep] = useState<AuthStep>('form');
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'form' | 'verifying' | 'waitlist-success'>('form');
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<ValidationError[]>([]);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Form fields
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+
+  // Password strength
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength | null>(null);
+
+  // Rate limit status
+  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null);
+
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setMode('signup');
+      setStep('form');
+      setErrors([]);
+      setGeneralError(null);
+      setRateLimitMessage(null);
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setName('');
+      setPasswordStrength(null);
+    }
+  }, [isOpen]);
+
+  // Update password strength when password changes
+  useEffect(() => {
+    if (password && mode === 'signup') {
+      setPasswordStrength(checkPasswordStrength(password));
+    } else {
+      setPasswordStrength(null);
+    }
+  }, [password, mode]);
+
+  const getFieldError = useCallback((field: string): string | undefined => {
+    return errors.find(e => e.field === field)?.message;
+  }, [errors]);
+
+  const handleLogin = useCallback(async () => {
+    setErrors([]);
+    setGeneralError(null);
+    setRateLimitMessage(null);
+
+    // Validate input
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      setErrors(formatZodErrors(result.error));
+      return;
+    }
+
+    // Check rate limit
+    const rateLimitResult = authRateLimiter.check(email.toLowerCase());
+    if (!rateLimitResult.allowed) {
+      setRateLimitMessage(rateLimitResult.message || 'Too many attempts. Please try again later.');
+      return;
+    }
+
+    setLoading(true);
+    setStep('processing');
+
+    try {
+      const authResult = await loginUser(email, password);
+
+      if (!authResult.success) {
+        authRateLimiter.recordFailure(email.toLowerCase());
+        setGeneralError(authResult.error || 'Login failed');
+        setStep('form');
+        setLoading(false);
+        return;
+      }
+
+      // Success - reset rate limiter
+      authRateLimiter.reset(email.toLowerCase());
+      setStep('success');
+
+      setTimeout(() => {
+        if (authResult.user) {
+          onSuccess(authResult.user);
+        }
+      }, 1500);
+    } catch (err) {
+      console.error('Login error:', err);
+      setGeneralError('An unexpected error occurred. Please try again.');
+      setStep('form');
+      setLoading(false);
+    }
+  }, [email, password, onSuccess]);
+
+  const handleSignup = useCallback(async () => {
+    setErrors([]);
+    setGeneralError(null);
+    setRateLimitMessage(null);
+
+    // Validate input
+    const result = registerSchema.safeParse({ name, email, password, confirmPassword });
+    if (!result.success) {
+      setErrors(formatZodErrors(result.error));
+      return;
+    }
+
+    // Check password strength
+    const strength = checkPasswordStrength(password);
+    if (strength.level === 'weak') {
+      setGeneralError('Please choose a stronger password');
+      return;
+    }
+
+    // Check rate limit
+    const rateLimitResult = authRateLimiter.check(email.toLowerCase());
+    if (!rateLimitResult.allowed) {
+      setRateLimitMessage(rateLimitResult.message || 'Too many attempts. Please try again later.');
+      return;
+    }
+
+    setLoading(true);
+    setStep('processing');
+
+    try {
+      const authResult = await registerUser(name, email, password);
+
+      if (!authResult.success) {
+        setGeneralError(authResult.error || 'Registration failed');
+        setStep('form');
+        setLoading(false);
+        return;
+      }
+
+      // Success
+      authRateLimiter.reset(email.toLowerCase());
+      setStep('success');
+
+      setTimeout(() => {
+        if (authResult.user) {
+          onSuccess(authResult.user);
+        }
+      }, 1500);
+    } catch (err) {
+      console.error('Registration error:', err);
+      setGeneralError('An unexpected error occurred. Please try again.');
+      setStep('form');
+      setLoading(false);
+    }
+  }, [name, email, password, confirmPassword, onSuccess]);
+
+  const handleWaitlist = useCallback(async () => {
+    setErrors([]);
+    setGeneralError(null);
+    setRateLimitMessage(null);
+
+    // Validate input
+    const result = waitlistSchema.safeParse({ email });
+    if (!result.success) {
+      setErrors(formatZodErrors(result.error));
+      return;
+    }
+
+    // Check rate limit
+    const rateLimitResult = waitlistRateLimiter.check(email.toLowerCase());
+    if (!rateLimitResult.allowed) {
+      setRateLimitMessage(rateLimitResult.message || 'Please wait before trying again.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const success = addToWaitlist(email);
+      if (success) {
+        setStep('waitlist-success');
+      } else {
+        setGeneralError('Failed to join waitlist. Please try again.');
+      }
+    } catch {
+      setGeneralError('An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }, [email]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+
+    switch (mode) {
+      case 'login':
+        handleLogin();
+        break;
+      case 'signup':
+        handleSignup();
+        break;
+      case 'waitlist':
+        handleWaitlist();
+        break;
+    }
+  }, [mode, handleLogin, handleSignup, handleWaitlist]);
+
+  const switchMode = useCallback((newMode: AuthMode) => {
+    setMode(newMode);
+    setErrors([]);
+    setGeneralError(null);
+    setRateLimitMessage(null);
+    setPassword('');
+    setConfirmPassword('');
+    setPasswordStrength(null);
+  }, []);
 
   if (!isOpen) return null;
 
-  const handleAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    setTimeout(() => {
-      if (mode === 'login') {
-        // Login: validate credentials
-        const existingUser = findUser(email);
-        if (!existingUser) {
-          setError('No account found with this email. Please sign up first.');
-          setLoading(false);
-          return;
-        }
-        if (existingUser.passwordHash !== hashPassword(password)) {
-          setError('Incorrect password. Please try again.');
-          setLoading(false);
-          return;
-        }
-        // Login successful
-        setStep('verifying');
-        setTimeout(() => {
-          onSuccess({
-            id: existingUser.id,
-            email: existingUser.email,
-            name: existingUser.name,
-            isVerified: true,
-          });
-        }, 1500);
-      } else if (mode === 'signup') {
-        // Sign up: check if email exists
-        if (findUser(email)) {
-          setError('An account with this email already exists. Please sign in.');
-          setLoading(false);
-          return;
-        }
-        if (password.length < 6) {
-          setError('Password must be at least 6 characters.');
-          setLoading(false);
-          return;
-        }
-        // Create new user
-        const newUser: StoredUser = {
-          id: `u${Date.now()}`,
-          email: email,
-          name: name,
-          passwordHash: hashPassword(password),
-        };
-        saveUser(newUser);
-        setStep('verifying');
-        setTimeout(() => {
-          onSuccess({
-            id: newUser.id,
-            email: newUser.email,
-            name: newUser.name,
-            isVerified: true,
-          });
-        }, 1500);
-      }
-    }, 500);
+  const getStrengthColor = (level: PasswordStrength['level']) => {
+    switch (level) {
+      case 'weak': return 'bg-red-500';
+      case 'fair': return 'bg-yellow-500';
+      case 'good': return 'bg-blue-500';
+      case 'strong': return 'bg-green-500';
+    }
   };
 
-  const handleWaitlist = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    setTimeout(() => {
-      saveToWaitlist(email);
-      setStep('waitlist-success');
-      setLoading(false);
-    }, 500);
+  const getStrengthWidth = (score: number) => {
+    return `${Math.min(100, (score / 7) * 100)}%`;
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden relative">
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
+    >
+      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative">
+        {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-colors"
+          className="absolute top-5 right-5 text-slate-300 hover:text-slate-500 transition-colors z-10"
+          aria-label="Close"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        {step === 'form' && mode !== 'waitlist' ? (
-          <div className="p-10">
-            <div className="mb-8 text-center">
-              <div className="bg-primary text-white w-12 h-12 flex items-center justify-center rounded-2xl font-black text-2xl italic mx-auto mb-4">R</div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
-                {mode === 'login' ? 'Welcome Back' : 'Get Full Report'}
-              </h3>
-              <p className="text-slate-500 font-medium text-sm">
-                Download your complete investment analysis with XIRR calculations, cash flows, and projections
+        {/* Form View */}
+        {step === 'form' && mode !== 'waitlist' && (
+          <div className="p-8">
+            <div className="mb-6 text-center">
+              <div className="bg-primary text-white w-14 h-14 flex items-center justify-center rounded-2xl font-black text-3xl italic mx-auto mb-4 shadow-lg shadow-primary/30">
+                R
+              </div>
+              <h2 id="auth-modal-title" className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+                {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+              </h2>
+              <p className="text-slate-500 text-sm">
+                {mode === 'login'
+                  ? 'Sign in to access your investment reports'
+                  : 'Get full access to XIRR calculations and reports'
+                }
               </p>
             </div>
 
-            <div className="space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium text-red-600">
-                  {error}
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              {/* Rate Limit Warning */}
+              {rateLimitMessage && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium text-amber-700" role="alert">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    {rateLimitMessage}
+                  </div>
                 </div>
               )}
 
-              <form onSubmit={handleAuth} className="space-y-4">
+              {/* General Error */}
+              {generalError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium text-red-600" role="alert">
+                  {generalError}
+                </div>
+              )}
+
+              {/* Email Field */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Email Address
+                </label>
                 <input
+                  id="email"
                   type="email"
-                  placeholder="Email Address"
-                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all ${
+                    getFieldError('email') ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-500/10' : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10'
+                  }`}
+                  aria-invalid={!!getFieldError('email')}
+                  aria-describedby={getFieldError('email') ? 'email-error' : undefined}
                 />
-                {mode === 'signup' && (
+                {getFieldError('email') && (
+                  <p id="email-error" className="mt-1.5 text-xs text-red-500 font-medium">{getFieldError('email')}</p>
+                )}
+              </div>
+
+              {/* Name Field (Signup only) */}
+              {mode === 'signup' && (
+                <div>
+                  <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Full Name
+                  </label>
                   <input
+                    id="name"
                     type="text"
-                    placeholder="Full Name"
-                    required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+                    placeholder="John Doe"
+                    autoComplete="name"
+                    className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all ${
+                      getFieldError('name') ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-500/10' : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10'
+                    }`}
+                    aria-invalid={!!getFieldError('name')}
+                    aria-describedby={getFieldError('name') ? 'name-error' : undefined}
                   />
-                )}
-                <input
-                  type="password"
-                  placeholder={mode === 'login' ? "Password" : "Password (min 6 characters)"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
-                />
-
-                <button
-                  disabled={loading}
-                  className="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-2"
-                >
-                  {loading && <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75"/></svg>}
-                  {mode === 'login' ? 'Sign In' : 'Create Free Account'}
-                </button>
-              </form>
-
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => {
-                    setMode(mode === 'login' ? 'signup' : 'login');
-                    setError(null);
-                    setPassword('');
-                  }}
-                  className="w-full text-center text-xs font-bold text-slate-400 hover:text-primary transition-colors"
-                >
-                  {mode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-                </button>
-                <button
-                  onClick={() => {
-                    setMode('waitlist');
-                    setError(null);
-                  }}
-                  className="w-full text-center text-xs font-bold text-primary hover:text-primary-dark transition-colors"
-                >
-                  Just want updates? Join the waiting list
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : step === 'form' && mode === 'waitlist' ? (
-          <div className="p-10">
-            <div className="mb-8 text-center">
-              <div className="bg-blue-500 text-white w-12 h-12 flex items-center justify-center rounded-2xl mx-auto mb-4">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
-                Be the First to Know
-              </h3>
-              <p className="text-slate-500 font-medium text-sm">
-                Join our waiting list and get notified about new features and updates
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium text-red-600">
-                  {error}
+                  {getFieldError('name') && (
+                    <p id="name-error" className="mt-1.5 text-xs text-red-500 font-medium">{getFieldError('name')}</p>
+                  )}
                 </div>
               )}
 
-              <form onSubmit={handleWaitlist} className="space-y-4">
+              {/* Password Field */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Password
+                </label>
                 <input
-                  type="email"
-                  placeholder="Email Address"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={mode === 'login' ? 'Enter your password' : 'Min 8 characters'}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all ${
+                    getFieldError('password') ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-500/10' : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10'
+                  }`}
+                  aria-invalid={!!getFieldError('password')}
+                  aria-describedby={getFieldError('password') ? 'password-error' : undefined}
                 />
+                {getFieldError('password') && (
+                  <p id="password-error" className="mt-1.5 text-xs text-red-500 font-medium">{getFieldError('password')}</p>
+                )}
 
-                <button
-                  disabled={loading}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
-                >
-                  {loading && <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75"/></svg>}
-                  Join Waiting List
-                </button>
-              </form>
+                {/* Password Strength Indicator (Signup only) */}
+                {mode === 'signup' && passwordStrength && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-slate-500">Password strength</span>
+                      <span className={`text-xs font-bold capitalize ${
+                        passwordStrength.level === 'weak' ? 'text-red-500' :
+                        passwordStrength.level === 'fair' ? 'text-yellow-600' :
+                        passwordStrength.level === 'good' ? 'text-blue-500' : 'text-green-500'
+                      }`}>
+                        {passwordStrength.level}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${getStrengthColor(passwordStrength.level)}`}
+                        style={{ width: getStrengthWidth(passwordStrength.score) }}
+                      />
+                    </div>
+                    {passwordStrength.feedback.length > 0 && (
+                      <p className="mt-1.5 text-xs text-slate-500">
+                        {passwordStrength.feedback[0]}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
 
+              {/* Confirm Password Field (Signup only) */}
+              {mode === 'signup' && (
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter your password"
+                    autoComplete="new-password"
+                    className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all ${
+                      getFieldError('confirmPassword') ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-500/10' : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10'
+                    }`}
+                    aria-invalid={!!getFieldError('confirmPassword')}
+                    aria-describedby={getFieldError('confirmPassword') ? 'confirm-error' : undefined}
+                  />
+                  {getFieldError('confirmPassword') && (
+                    <p id="confirm-error" className="mt-1.5 text-xs text-red-500 font-medium">{getFieldError('confirmPassword')}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Submit Button */}
               <button
-                onClick={() => {
-                  setMode('signup');
-                  setError(null);
-                }}
-                className="w-full text-center text-xs font-bold text-slate-400 hover:text-primary transition-colors"
+                type="submit"
+                disabled={loading || !!rateLimitMessage}
+                className="w-full bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
+                aria-busy={loading}
               >
-                Want full access? Create an account instead
+                {loading && (
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                    <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
+                  </svg>
+                )}
+                {mode === 'login' ? 'Sign In' : 'Create Account'}
+              </button>
+            </form>
+
+            {/* Mode Switcher */}
+            <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
+              <button
+                onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
+                className="w-full text-center text-sm font-medium text-slate-500 hover:text-primary transition-colors"
+              >
+                {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              </button>
+              <button
+                onClick={() => switchMode('waitlist')}
+                className="w-full text-center text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+              >
+                Just want updates? Join the waitlist
               </button>
             </div>
           </div>
-        ) : step === 'waitlist-success' ? (
-          <div className="p-16 text-center">
-            <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-8">
-              <svg className="w-10 h-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
+        )}
+
+        {/* Waitlist Form */}
+        {step === 'form' && mode === 'waitlist' && (
+          <div className="p-8">
+            <div className="mb-6 text-center">
+              <div className="bg-blue-500 text-white w-14 h-14 flex items-center justify-center rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <h2 id="auth-modal-title" className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+                Be the First to Know
+              </h2>
+              <p className="text-slate-500 text-sm">
+                Join our waitlist for exclusive updates and early access
+              </p>
             </div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">You're on the List!</h3>
-            <p className="text-slate-500 font-medium mb-8">
-              Thanks for joining! We'll notify you when new features are available.
-            </p>
-            <button
-              onClick={onClose}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm transition-colors"
-            >
-              Close
-            </button>
+
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              {rateLimitMessage && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium text-amber-700" role="alert">
+                  {rateLimitMessage}
+                </div>
+              )}
+
+              {generalError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium text-red-600" role="alert">
+                  {generalError}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="waitlist-email" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Email Address
+                </label>
+                <input
+                  id="waitlist-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all ${
+                    getFieldError('email') ? 'border-red-300 focus:border-red-400' : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'
+                  }`}
+                />
+                {getFieldError('email') && (
+                  <p className="mt-1.5 text-xs text-red-500 font-medium">{getFieldError('email')}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !!rateLimitMessage}
+                className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+              >
+                {loading && (
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                    <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
+                  </svg>
+                )}
+                Join Waitlist
+              </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <button
+                onClick={() => switchMode('signup')}
+                className="w-full text-center text-sm font-medium text-slate-500 hover:text-primary transition-colors"
+              >
+                Want full access? Create an account
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="p-16 text-center">
-            <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-8">
+        )}
+
+        {/* Processing State */}
+        {step === 'processing' && (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-6 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-slate-100"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
+              {mode === 'login' ? 'Signing you in...' : 'Creating your account...'}
+            </h3>
+            <p className="text-slate-500 text-sm">
+              Please wait while we secure your session
+            </p>
+          </div>
+        )}
+
+        {/* Success State */}
+        {step === 'success' && (
+          <div className="p-12 text-center">
+            <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Verified & Loading</h3>
-            <p className="text-slate-500 font-medium mb-8">
-              Welcome aboard! Your full investment report is being generated and your download will start automatically.
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">
+              {mode === 'login' ? 'Welcome Back!' : 'Account Created!'}
+            </h3>
+            <p className="text-slate-500 mb-6">
+              Preparing your investment dashboard...
             </p>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-accent animate-[loading_2s_ease-in-out_infinite]"></div>
+              <div className="h-full bg-accent animate-[loading_1.5s_ease-in-out_infinite]"></div>
             </div>
           </div>
         )}
+
+        {/* Waitlist Success */}
+        {step === 'waitlist-success' && (
+          <div className="p-12 text-center">
+            <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">
+              You're on the List!
+            </h3>
+            <p className="text-slate-500 mb-8">
+              Thanks for joining! We'll notify you about new features and updates.
+            </p>
+            <button
+              onClick={onClose}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-8 py-3 rounded-xl font-bold text-sm transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
+
       <style>{`
         @keyframes loading {
           0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+          100% { transform: translateX(200%); }
         }
       `}</style>
     </div>
