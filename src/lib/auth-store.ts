@@ -20,6 +20,7 @@ export interface AuthResult {
   success: boolean;
   user?: User;
   error?: string;
+  confirmEmail?: boolean;
 }
 
 // ============================================================================
@@ -37,7 +38,10 @@ export async function registerUser(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name } },
+    options: {
+      data: { name },
+      emailRedirectTo: window.location.origin,
+    },
   });
 
   if (error) {
@@ -46,6 +50,21 @@ export async function registerUser(
 
   if (!data.user) {
     return { success: false, error: 'Registration failed' };
+  }
+
+  // No session means email confirmation is required
+  if (!data.session) {
+    return {
+      success: true,
+      confirmEmail: true,
+      user: {
+        id: data.user.id,
+        email: data.user.email ?? '',
+        name: (data.user.user_metadata?.name as string) ?? '',
+        isVerified: false,
+        createdAt: data.user.created_at ?? new Date().toISOString(),
+      },
+    };
   }
 
   return {

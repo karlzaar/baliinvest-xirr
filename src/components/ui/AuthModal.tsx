@@ -17,7 +17,7 @@ interface Props {
   hideWaitlist?: boolean;
 }
 
-type AuthStep = 'form' | 'processing' | 'success' | 'waitlist-success' | 'forgot-email' | 'forgot-sent';
+type AuthStep = 'form' | 'processing' | 'success' | 'confirm-email' | 'waitlist-success' | 'forgot-email' | 'forgot-sent';
 
 export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialMode = 'signup', hideWaitlist = false }) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -158,13 +158,18 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initial
 
       // Success
       authRateLimiter.reset(email.toLowerCase());
-      setStep('success');
 
-      setTimeout(() => {
-        if (authResult.user) {
-          onSuccess(authResult.user);
-        }
-      }, 1500);
+      if (authResult.confirmEmail) {
+        setStep('confirm-email');
+        setLoading(false);
+      } else {
+        setStep('success');
+        setTimeout(() => {
+          if (authResult.user) {
+            onSuccess(authResult.user);
+          }
+        }, 1500);
+      }
     } catch (err) {
       console.error('Registration error:', err);
       setGeneralError('An unexpected error occurred. Please try again.');
@@ -605,6 +610,36 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initial
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div className="h-full bg-accent animate-[loading_1.5s_ease-in-out_infinite]"></div>
             </div>
+          </div>
+        )}
+
+        {/* Confirm Email */}
+        {step === 'confirm-email' && (
+          <div className="p-8 text-center">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">
+              Check Your Email
+            </h3>
+            <p className="text-slate-500 mb-2">
+              We sent a confirmation link to
+            </p>
+            <p className="font-semibold text-slate-700 mb-6">
+              {email}
+            </p>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600 mb-6 text-left">
+              <p className="font-medium mb-1">Please confirm your email to complete signup.</p>
+              <p className="text-slate-400 text-xs">Click the link in the email, then come back and sign in. Check your spam folder if you don't see it.</p>
+            </div>
+            <button
+              onClick={() => { setStep('form'); setMode('login'); setPassword(''); setGeneralError(null); }}
+              className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/25 transition-all"
+            >
+              Go to Sign In
+            </button>
           </div>
         )}
 
