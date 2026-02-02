@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import AuthModal from '../ui/AuthModal';
+import { Toast } from '../ui/Toast';
 import { useAuth } from '../../lib/auth-context';
 import { logoutUser, sendPasswordReset } from '../../lib/auth-store';
 
 export function Header() {
   const [showAuth, setShowAuth] = useState(false);
   const { user, loading } = useAuth();
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -13,6 +15,9 @@ export function Header() {
 
   return (
     <header className="w-full bg-white border-b border-slate-200">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
       <AuthModal
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
@@ -54,8 +59,12 @@ export function Header() {
                 <button
                   onClick={async () => {
                     if (user.email) {
-                      await sendPasswordReset(user.email);
-                      alert('Password reset link sent to your email.');
+                      const result = await sendPasswordReset(user.email);
+                      if (result.success) {
+                        setToast({ message: 'Password reset link sent — check your email', type: 'success' });
+                      } else {
+                        setToast({ message: result.error || 'Failed to send reset link', type: 'error' });
+                      }
                     }
                   }}
                   className="ml-2 text-slate-400 hover:text-amber-500 transition-colors"
