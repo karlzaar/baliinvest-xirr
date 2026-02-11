@@ -1,48 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  /* Unified light theme - slate/indigo palette */
-  --color-primary: #4f46e5;
-  --color-primary-dark: #4338ca;
-  --color-primary-light: #eef2ff;
+  /* Investland Dark Theme - Teal/Zinc palette */
+  --color-primary: #2dd4bf;
+  --color-primary-dark: #14b8a6;
+  --color-primary-light: rgba(45, 212, 191, 0.15);
 
-  --color-accent: #10b981;
-  --color-accent-dark: #059669;
-  --color-accent-light: #d1fae5;
+  --color-accent: #2dd4bf;
+  --color-accent-dark: #14b8a6;
+  --color-accent-light: rgba(45, 212, 191, 0.1);
 
-  --color-background: #f1f5f9;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f8fafc;
+  --color-background: #09090b;
+  --color-surface: #18181b;
+  --color-surface-alt: #27272a;
 
-  --color-border: #e2e8f0;
-  --color-border-light: #f1f5f9;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-light: rgba(255, 255, 255, 0.05);
 
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d4d4d8;
+  --color-text-muted: #a1a1aa;
 
   --color-negative: #ef4444;
-  --color-negative-light: #fee2e2;
+  --color-negative-light: rgba(239, 68, 68, 0.15);
   --color-warning: #f97316;
-  --color-warning-light: #ffedd5;
+  --color-warning-light: rgba(249, 115, 22, 0.15);
 
   --font-family-display: "Inter", sans-serif;
 }
 
-/* Custom scrollbar - light theme */
+/* Selection styling */
+::selection {
+  background-color: rgba(45, 212, 191, 0.3);
+  color: #99f6e4;
+}
+
+/* Custom scrollbar - dark theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #09090b;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #27272a;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4f46e5;
+  background: #3f3f46;
 }
 
 /* Material symbols styling */
@@ -50,20 +56,62 @@
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Date input styling - light theme */
+/* Date input styling - dark theme */
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
+  filter: invert(1);
 }
 
-/* Radio card styles */
+/* Glass card effect */
+.glass-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1rem;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card:hover {
+  border-color: rgba(45,212,191,0.3);
+  box-shadow: 0 0 40px -10px rgba(45,212,191,0.1);
+}
+
+/* Glass panel effect */
+.glass-panel {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Radio card styles - dark theme */
 .radio-card-input:checked + .radio-card-content {
-  border-color: #4f46e5;
-  background-color: rgba(79, 70, 229, 0.05);
+  border-color: rgba(45, 212, 191, 0.5);
+  background-color: rgba(45, 212, 191, 0.1);
 }
 .radio-card-input:checked + .radio-card-content .radio-indicator {
-  border-color: #4f46e5;
-  background-color: #4f46e5;
+  border-color: #2dd4bf;
+  background-color: #2dd4bf;
 }
 .radio-card-input:checked + .radio-card-content .radio-indicator::after {
   opacity: 1;
+}
+
+/* Glow effects */
+.glow-teal {
+  box-shadow: 0 0 20px -5px rgba(45, 212, 191, 0.3);
+}
+
+/* Text gradient */
+.text-gradient-primary {
+  background: linear-gradient(to bottom, #ffffff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Form input focus ring - dark theme */
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(45,212,191,0.5) !important;
+  box-shadow: 0 0 0 2px rgba(45,212,191,0.1);
 }

@@ -147,7 +147,7 @@ export function XIRRCalculator() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text-primary selection:bg-primary-light selection:text-primary -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
+    <div className="min-h-screen bg-background text-text-primary selection:bg-primary/30 selection:text-primary -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
       {toast && (
         <Toast
           message={toast.message}
@@ -159,13 +159,13 @@ export function XIRRCalculator() {
       <div className="max-w-[100%] mx-auto">
         <header className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="bg-primary p-2.5 rounded-lg shadow-sm">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-primary p-2.5 rounded-lg shadow-lg shadow-primary/20">
+                <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-text-primary tracking-tight">XIRR Calculator</h1>
+                <h1 className="text-2xl font-bold text-white tracking-tight">XIRR Calculator</h1>
                 <p className="text-text-muted text-xs mt-1 max-w-md">
                   Calculate your real estate investment returns based on purchase price, payment schedule, and projected sale price
                 </p>
@@ -174,12 +174,12 @@ export function XIRRCalculator() {
 
             <div className="flex items-center gap-4 flex-wrap">
             {currency !== 'IDR' && (
-              <div className="flex items-center gap-3 bg-surface px-4 py-2 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-3 glass-panel px-4 py-2 rounded-lg">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
                   1 {currency} = {rate.toLocaleString()} IDR
                 </span>
                 {ratesLoading ? (
-                  <span className="text-yellow-500 text-xs">(loading...)</span>
+                  <span className="text-yellow-400 text-xs">(loading...)</span>
                 ) : ratesError ? (
                   <span className="text-negative text-xs" title={ratesError}>!</span>
                 ) : (
@@ -195,12 +195,12 @@ export function XIRRCalculator() {
               </div>
             )}
 
-            <div className="flex items-center bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mr-3">Currency</span>
+            <div className="flex items-center glass-panel px-4 py-2 rounded-lg">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest mr-3">Currency</span>
               <select
                 value={currency}
                 onChange={(e) => updateProperty('currency', e.target.value as 'IDR' | 'USD' | 'AUD' | 'EUR' | 'GBP' | 'INR' | 'CNY' | 'AED' | 'RUB')}
-                className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer"
+                className="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer"
               >
                 <option value="IDR">Rp IDR</option>
                 <option value="USD">$ USD</option>

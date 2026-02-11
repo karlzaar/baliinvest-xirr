@@ -55,39 +55,39 @@ const MonthYearPicker: React.FC<MonthYearPickerProps> = ({ value, onChange, minY
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all min-w-[160px]"
+        className="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-white hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-w-[160px]"
       >
-        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span className={value ? 'text-slate-900' : 'text-slate-400'}>{displayValue}</span>
-        <svg className={`w-4 h-4 text-slate-400 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <span className={value ? 'text-white' : 'text-text-muted'}>{displayValue}</span>
+        <svg className={`w-4 h-4 text-text-muted ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-4 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 mt-2 bg-surface border border-border rounded-xl shadow-xl z-50 p-4 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Year selector */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
             <button
               type="button"
               onClick={() => setSelectedYear(Math.max(minYear, selectedYear - 1))}
               disabled={selectedYear <= minYear}
-              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg hover:bg-surface-alt disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="text-lg font-bold text-slate-900">{selectedYear}</span>
+            <span className="text-lg font-bold text-white">{selectedYear}</span>
             <button
               type="button"
               onClick={() => setSelectedYear(Math.min(maxYear, selectedYear + 1))}
               disabled={selectedYear >= maxYear}
-              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg hover:bg-surface-alt disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -104,8 +104,8 @@ const MonthYearPicker: React.FC<MonthYearPickerProps> = ({ value, onChange, minY
                   onClick={() => handleMonthSelect(idx)}
                   className={`py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
                     isSelected
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                      ? 'bg-primary text-white shadow-md'
+                      : 'text-text-secondary hover:bg-primary/10 hover:text-primary'
                   }`}
                 >
                   {month}
@@ -115,14 +115,14 @@ const MonthYearPicker: React.FC<MonthYearPickerProps> = ({ value, onChange, minY
           </div>
 
           {/* Quick actions */}
-          <div className="flex justify-between mt-4 pt-3 border-t border-slate-100">
+          <div className="flex justify-between mt-4 pt-3 border-t border-border">
             <button
               type="button"
               onClick={() => {
                 onChange('');
                 setIsOpen(false);
               }}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+              className="text-xs font-semibold text-text-muted hover:text-text-secondary transition-colors"
             >
               Clear
             </button>
@@ -134,7 +134,7 @@ const MonthYearPicker: React.FC<MonthYearPickerProps> = ({ value, onChange, minY
                 onChange(`${now.getFullYear()}-${month}`);
                 setIsOpen(false);
               }}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+              className="text-xs font-semibold text-primary hover:text-indigo-700 transition-colors"
             >
               This month
             </button>
@@ -218,17 +218,17 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mb-8">
-      <div className="mb-6 flex items-center border-b border-slate-200 pb-4">
+    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm mb-8">
+      <div className="mb-6 flex items-center border-b border-border pb-4">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-indigo-600">savings</span>
-          <h2 className="text-xl font-bold text-slate-900">Investment Overview</h2>
+          <span className="material-symbols-outlined text-primary">savings</span>
+          <h2 className="text-xl font-bold text-white">Investment Overview</h2>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* Core Investment Section */}
         <section className="space-y-6">
-          <h3 className="text-base font-semibold text-slate-700 mb-4">Core Investment</h3>
+          <h3 className="text-base font-semibold text-text-secondary mb-4">Core Investment</h3>
           <div className="grid grid-cols-1 gap-6">
             <TopInputGroup
               label={`Initial Capex (${currency.code})`}
@@ -242,7 +242,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
             />
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-text-muted">
                   Purchase Date
                   <Tooltip text="The date when investment begins. Year 1 projections start from this year." />
                 </label>
@@ -267,7 +267,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
         {/* First Operational Year Section */}
         <section className="space-y-6">
-          <h3 className="text-base font-semibold text-slate-700 mb-4">First Operational Year</h3>
+          <h3 className="text-base font-semibold text-text-secondary mb-4">First Operational Year</h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-6">
             <TopInputGroup
               label="Occupancy %"
@@ -305,7 +305,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
 
           <button
             onClick={() => setShowOccupancyGrowth(!showOccupancyGrowth)}
-            className="w-full mt-4 flex items-center justify-center gap-2 py-4 bg-[#f5f8ff] hover:bg-[#ebf1ff] text-[#4f46e5] font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all border border-transparent"
+            className="w-full mt-4 flex items-center justify-center gap-2 py-4 bg-primary/10 hover:bg-primary/20 text-primary font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all border border-transparent"
           >
             Configure Yearly Step-ups
             <svg className={`w-3.5 h-3.5 transition-transform ${showOccupancyGrowth ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,25 +316,25 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
       </div>
 
       {showOccupancyGrowth && (
-        <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="mt-8 pt-8 border-t border-border animate-in fade-in slide-in-from-top-2 duration-300">
           {/* Property Readiness */}
-          <div className="mb-8 p-5 bg-slate-50 rounded-2xl border border-slate-200">
+          <div className="mb-8 p-5 bg-surface-alt rounded-2xl border border-border">
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={!assumptions.isPropertyReady}
                   onChange={(e) => handleChange('isPropertyReady', !e.target.checked)}
-                  className="w-5 h-5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  className="w-5 h-5 rounded-md border-slate-300 text-primary focus:ring-indigo-500 cursor-pointer"
                 />
-                <span className="text-sm font-semibold text-slate-700">Property is not ready yet</span>
+                <span className="text-sm font-semibold text-text-secondary">Property is not ready yet</span>
               </label>
               <Tooltip text="Check this if the property is still under construction or not yet operational. The ready date will affect Year 1 occupancy calculations." />
             </div>
 
             {!assumptions.isPropertyReady && (
               <div className="mt-4 flex items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                <label className="text-sm font-medium text-slate-600">Property Ready Date:</label>
+                <label className="text-sm font-medium text-text-muted">Property Ready Date:</label>
                 <MonthYearPicker
                   value={assumptions.propertyReadyDate}
                   onChange={(value) => handleChange('propertyReadyDate', value)}
@@ -342,7 +342,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
                   maxYear={getBaseYear(assumptions.purchaseDate) + 10}
                 />
                 {assumptions.propertyReadyDate && (
-                  <span className="text-xs text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                  <span className="text-xs text-text-muted bg-surface px-3 py-1.5 rounded-lg border border-border">
                     Occupancy adjusted until property is ready
                   </span>
                 )}
@@ -351,7 +351,7 @@ const TopInputsPanel: React.FC<Props> = ({ assumptions, onChange, currency }) =>
           </div>
 
           <div className="flex items-center gap-2 mb-6">
-            <h4 className="text-sm font-semibold text-slate-700">Yearly Occupancy Point Increase</h4>
+            <h4 className="text-sm font-semibold text-text-secondary">Yearly Occupancy Point Increase</h4>
             <Tooltip text="Percentage points added to occupancy each year. E.g., if Y1 is 55% and Y2 increase is 4%, then Y2 occupancy becomes 59%." />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4">
@@ -404,7 +404,7 @@ const OccupancyIncreaseInput: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-medium text-slate-500">Y{index + 2}</label>
+      <label className="text-xs font-medium text-text-muted">Y{index + 2}</label>
       <div className="relative">
         <input
           type="text"
@@ -412,9 +412,9 @@ const OccupancyIncreaseInput: React.FC<{
           value={inputValue}
           placeholder={placeholder.toString()}
           onChange={handleInputChange}
-          className="w-full bg-[#fcfdfe] border border-slate-200 rounded-xl px-3 py-2 text-[13px] font-bold text-slate-900 placeholder:text-slate-300 focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none"
+          className="w-full bg-surface-alt/50 border border-border rounded-xl px-3 py-2 text-[13px] font-bold text-white placeholder:text-text-muted focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none"
         />
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">%</span>
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-text-muted">%</span>
       </div>
     </div>
   );
@@ -500,13 +500,13 @@ const TopInputGroup: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+      <label className="flex items-center gap-1.5 text-sm font-medium text-text-muted">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>
       <div className="relative group">
         {icon && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-bold text-slate-300 pointer-events-none group-focus-within:text-[#4f46e5] transition-colors">{icon}</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-bold text-text-muted pointer-events-none group-focus-within:text-primary transition-colors">{icon}</span>
         )}
         <input
           type="text"
@@ -516,11 +516,11 @@ const TopInputGroup: React.FC<{
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           autoFocus={autoFocus}
-          className="w-full bg-[#fcfdfe] border border-slate-200 rounded-2xl py-4 text-[16px] font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] transition-all tabular-nums"
+          className="w-full bg-surface-alt/50 border border-border rounded-2xl py-4 text-[16px] font-bold text-white placeholder:text-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all tabular-nums"
           style={{ paddingLeft: icon ? '2.75rem' : '1.25rem', paddingRight: '1rem' }}
         />
         {isPercentage && (
-          <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-slate-300">%</span>
+          <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-text-muted">%</span>
         )}
       </div>
     </div>

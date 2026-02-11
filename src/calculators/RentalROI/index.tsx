@@ -115,7 +115,7 @@ export function RentalROICalculator() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
+    <div className="min-h-screen bg-background text-text-primary selection:bg-primary/30 selection:text-primary -mx-4 md:-mx-10 lg:-mx-20 -my-8 px-6 py-8">
       {toast && (
         <Toast
           message={toast.message}
@@ -127,26 +127,26 @@ export function RentalROICalculator() {
       <div className="max-w-[100%] mx-auto">
         <header className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="bg-indigo-600 p-2.5 rounded-lg shadow-sm">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-primary p-2.5 rounded-lg shadow-lg shadow-primary/20">
+              <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">10 Year Annualized ROI</h1>
-              <p className="text-slate-500 text-xs mt-1 max-w-md">
+              <h1 className="text-2xl font-bold text-white tracking-tight">10 Year Annualized ROI</h1>
+              <p className="text-text-muted text-xs mt-1 max-w-md">
                 Project your rental property returns with revenue streams, operating costs, and management fees over 10 years
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Currency</span>
+            <div className="flex items-center gap-3 glass-panel px-4 py-2 rounded-lg">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Currency</span>
               <select
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value as CurrencyCode)}
-                className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer appearance-none pr-4"
+                className="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer appearance-none pr-4"
               >
                 {Object.values(CURRENCIES).map(c => (
                   <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>
@@ -178,7 +178,7 @@ export function RentalROICalculator() {
             <button
               onClick={handleSaveDraft}
               disabled={isSaving}
-              className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-primary text-background px-5 py-2 rounded-lg text-xs font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSaving ? (
                 <>
@@ -204,9 +204,9 @@ export function RentalROICalculator() {
 
             <ProjectionsTable data={data} avg={averages} currency={currency} />
 
-            <div className="flex flex-col items-center justify-center pt-8 pb-20 border-t border-slate-200 mt-12">
+            <div className="flex flex-col items-center justify-center pt-8 pb-20 border-t border-border mt-12">
               <button
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl text-[13px] font-black uppercase tracking-[0.15em] shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/60 transition-all active:scale-95 flex items-center gap-4"
+                className="bg-primary hover:bg-primary-dark text-background px-10 py-5 rounded-2xl text-[13px] font-black uppercase tracking-[0.15em] shadow-xl shadow-primary/30 hover:shadow-primary/40 transition-all active:scale-95 flex items-center gap-4"
                 onClick={() => setView('report')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,12 +215,12 @@ export function RentalROICalculator() {
                 <span>Preview Report</span>
               </button>
               <div className="mt-6 flex flex-col items-center gap-2.5">
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-md">
+                <p className="text-text-muted text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-md">
                   Full 10-Year Analysis with Key Metrics & Financial Projections
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
-                  <span className="text-[10px] text-indigo-600 font-black tracking-widest uppercase">Preview before export</span>
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                  <span className="text-[10px] text-primary font-black tracking-widest uppercase">Preview before export</span>
                 </div>
               </div>
             </div>

@@ -70,17 +70,17 @@ export function DraftSelector<T>({
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+        className="flex items-center gap-2 px-4 py-2 glass-panel rounded-lg hover:border-primary/30 transition-colors"
       >
         <span className="material-symbols-outlined text-lg text-primary">folder_open</span>
-        <span className="text-sm font-medium text-slate-700">
+        <span className="text-sm font-medium text-text-secondary">
           {currentName || 'Saved Drafts'}
         </span>
-        <span className="material-symbols-outlined text-lg text-slate-400">
+        <span className="material-symbols-outlined text-lg text-text-muted">
           {isOpen ? 'expand_less' : 'expand_more'}
         </span>
         {drafts.length > 0 && (
-          <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
+          <span className="bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
             {drafts.length}
           </span>
         )}
@@ -88,16 +88,16 @@ export function DraftSelector<T>({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+        <div className="absolute top-full left-0 mt-2 w-80 glass-card bg-surface rounded-xl shadow-xl border border-border z-50 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-700">Saved Calculations</span>
+          <div className="px-4 py-3 bg-surface-alt/50 border-b border-border flex items-center justify-between">
+            <span className="text-sm font-semibold text-text-secondary">Saved Calculations</span>
             <button
               onClick={() => {
                 setShowSaveModal(true);
                 setIsOpen(false);
               }}
-              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
             >
               <span className="material-symbols-outlined text-base">add</span>
               Save Current
@@ -108,16 +108,16 @@ export function DraftSelector<T>({
           <div className="max-h-64 overflow-y-auto">
             {drafts.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory_2</span>
-                <p className="text-sm text-slate-500">No saved calculations yet</p>
-                <p className="text-xs text-slate-400 mt-1">Click "Save Current" to save your first draft</p>
+                <span className="material-symbols-outlined text-4xl text-text-muted mb-2">inventory_2</span>
+                <p className="text-sm text-text-muted">No saved calculations yet</p>
+                <p className="text-xs text-text-muted mt-1">Click "Save Current" to save your first draft</p>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-border">
                 {drafts.map((draft) => (
                   <li
                     key={draft.id}
-                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors group"
+                    className="px-4 py-3 hover:bg-surface-alt/50 cursor-pointer transition-colors group"
                     onClick={() => {
                       onSelect(draft);
                       setIsOpen(false);
@@ -125,10 +125,10 @@ export function DraftSelector<T>({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">
+                        <p className="text-sm font-medium text-text-secondary truncate">
                           {draft.name}
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-text-muted mt-0.5">
                           {formatDate(draft.updatedAt)}
                         </p>
                       </div>
@@ -136,8 +136,8 @@ export function DraftSelector<T>({
                         onClick={(e) => handleDelete(draft.id, e)}
                         className={`p-1 rounded transition-colors ${
                           deleteConfirm === draft.id
-                            ? 'bg-red-100 text-red-600'
-                            : 'opacity-0 group-hover:opacity-100 hover:bg-red-50 text-slate-400 hover:text-red-500'
+                            ? 'bg-red-500/20 text-red-400'
+                            : 'opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-text-muted hover:text-red-400'
                         }`}
                         title={deleteConfirm === draft.id ? 'Click again to confirm' : 'Delete'}
                       >
@@ -156,11 +156,11 @@ export function DraftSelector<T>({
 
       {/* Save Modal */}
       {showSaveModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800">Save Calculation</h3>
-              <p className="text-sm text-slate-500 mt-1">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="glass-card bg-surface rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-border">
+            <div className="px-6 py-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-white">Save Calculation</h3>
+              <p className="text-sm text-text-muted mt-1">
                 Give your calculation a name to easily find it later
               </p>
             </div>
@@ -170,7 +170,7 @@ export function DraftSelector<T>({
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
                 placeholder="e.g., Villa Canggu 3BR, Investment Option A..."
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                className="w-full px-4 py-3 bg-surface-alt/50 border border-border rounded-lg text-white placeholder-text-muted focus:border-primary/50 outline-none transition-all"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSave();
@@ -178,17 +178,17 @@ export function DraftSelector<T>({
                 }}
               />
             </div>
-            <div className="px-6 py-4 bg-slate-50 flex justify-end gap-3">
+            <div className="px-6 py-4 bg-surface-alt/30 flex justify-end gap-3">
               <button
                 onClick={() => setShowSaveModal(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={!draftName.trim()}
-                className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-primary text-background text-sm font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Save Draft
               </button>

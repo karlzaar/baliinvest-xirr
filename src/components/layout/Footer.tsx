@@ -14,7 +14,7 @@ export function Footer({ onSelectCalculator }: FooterProps) {
   };
 
   return (
-    <footer className="bg-[#1a1f2e] text-slate-300">
+    <footer className="bg-surface text-text-secondary">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-10 lg:px-20 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -28,10 +28,10 @@ export function Footer({ onSelectCalculator }: FooterProps) {
               />
               <div>
                 <h3 className="text-white font-bold text-lg">ROI Calculate</h3>
-                <p className="text-xs text-white">Property Investment Tools</p>
+                <p className="text-xs text-text-muted">Property Investment Tools</p>
               </div>
             </div>
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-sm text-text-muted leading-relaxed">
               Analyze property investments with comprehensive XIRR calculations and 10-year cash flow projections for informed investment decisions.
             </p>
           </div>
@@ -43,7 +43,7 @@ export function Footer({ onSelectCalculator }: FooterProps) {
               <li>
                 <button
                   onClick={() => handleToolClick('xirr')}
-                  className="text-sm flex items-center gap-2 hover:text-primary transition-colors cursor-pointer group"
+                  className="text-sm flex items-center gap-2 text-text-secondary hover:text-primary transition-colors cursor-pointer group"
                 >
                   <span className="material-symbols-outlined text-base text-primary group-hover:scale-110 transition-transform">trending_up</span>
                   XIRR Calculator
@@ -52,7 +52,7 @@ export function Footer({ onSelectCalculator }: FooterProps) {
               <li>
                 <button
                   onClick={() => handleToolClick('rental-roi')}
-                  className="text-sm flex items-center gap-2 hover:text-primary transition-colors cursor-pointer group"
+                  className="text-sm flex items-center gap-2 text-text-secondary hover:text-primary transition-colors cursor-pointer group"
                 >
                   <span className="material-symbols-outlined text-base text-primary group-hover:scale-110 transition-transform">home_work</span>
                   Annualized ROI
@@ -81,19 +81,19 @@ export function Footer({ onSelectCalculator }: FooterProps) {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-slate-700/50">
+      <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-4 md:px-10 lg:px-20 py-6">
-          <p className="text-sm text-slate-400 text-center">
+          <p className="text-sm text-text-muted text-center">
             © {currentYear} ROI Calculate. All rights reserved.
           </p>
         </div>
       </div>
 
       {/* Disclaimer */}
-      <div className="bg-[#141821]">
+      <div className="bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-10 lg:px-20 py-4">
-          <p className="text-xs text-slate-500 text-center leading-relaxed">
-            <strong className="text-slate-400">Disclaimer:</strong> The calculations and projections provided by ROI Calculate tools are for informational purposes only and should not be considered as financial advice.
+          <p className="text-xs text-text-muted text-center leading-relaxed">
+            <strong className="text-text-secondary">Disclaimer:</strong> The calculations and projections provided by ROI Calculate tools are for informational purposes only and should not be considered as financial advice.
             Investment returns are not guaranteed and past performance does not indicate future results. Always consult with a qualified financial advisor before making investment decisions.
           </p>
         </div>

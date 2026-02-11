@@ -27,7 +27,7 @@ function App() {
   return (
     <div className="bg-background text-text-primary font-display min-h-screen flex flex-col">
       {/* Sticky header section */}
-      <div className="sticky top-0 z-50 bg-white shadow-sm">
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
         <Header />
         <CalculatorSelector
           calculators={CALCULATORS}
