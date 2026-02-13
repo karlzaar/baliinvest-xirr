@@ -37,6 +37,13 @@ export function Header() {
               <h1 className="text-xl font-bold text-white tracking-tight">ROI Calculate</h1>
               <p className="text-[10px] font-medium text-text-muted uppercase tracking-widest">Property Investment Tools</p>
             </div>
+            <div className="ml-4 pl-4 border-l border-border">
+              <img
+                src="/propertybase-logo.png"
+                alt="PropertyBase"
+                className="h-8"
+              />
+            </div>
           </div>
 
           {/* Profile Section */}
