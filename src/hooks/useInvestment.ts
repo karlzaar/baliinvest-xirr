@@ -22,7 +22,9 @@ const DEFAULT_INVESTMENT: InvestmentData = {
     installmentMonths: 6,
     schedule: [],
     bookingFee: 0,
-    bookingFeeDate: ''
+    bookingFeeDate: '',
+    bookingFeeInputType: 'amount',
+    bookingFeePercent: 0
   },
   exit: {
     strategyType: 'flip',

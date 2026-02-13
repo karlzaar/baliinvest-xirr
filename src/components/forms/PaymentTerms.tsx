@@ -106,25 +106,100 @@ export function PaymentTerms({
           <span className="text-sm font-medium text-text-secondary">Booking Fee (Optional)</span>
           <Tooltip text="Initial deposit to reserve the property. Usually refundable or deducted from total price. This is your first cash outflow." />
         </div>
+
+        {/* Input Type Toggle */}
+        <div className="flex gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => onUpdate('bookingFeeInputType', 'amount')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              data.bookingFeeInputType === 'amount'
+                ? 'bg-primary text-white'
+                : 'bg-surface-alt text-text-secondary border border-border hover:border-primary'
+            }`}
+          >
+            Amount
+          </button>
+          <button
+            type="button"
+            onClick={() => onUpdate('bookingFeeInputType', 'percent')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              data.bookingFeeInputType === 'percent'
+                ? 'bg-primary text-white'
+                : 'bg-surface-alt text-text-secondary border border-border hover:border-primary'
+            }`}
+          >
+            Percentage
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <label className="text-xs text-text-muted">Amount</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-mono">
-                {symbol}
-              </span>
-              <input
-                type="text"
-                value={idrToDisplay(data.bookingFee) > 0 ? formatNumber(idrToDisplay(data.bookingFee)) : ''}
-                onChange={(e) => {
-                  const displayValue = parseAmountInput(e.target.value);
-                  const idrValue = displayToIdr(displayValue);
-                  onUpdate('bookingFee', idrValue);
-                }}
-                placeholder="0"
-                className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 pl-12 text-text-primary font-mono placeholder:text-text-muted focus:border-primary focus:outline-none"
-              />
-            </div>
+            {data.bookingFeeInputType === 'amount' ? (
+              <>
+                <label className="text-xs text-text-muted">Amount</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-mono">
+                    {symbol}
+                  </span>
+                  <input
+                    type="text"
+                    value={idrToDisplay(data.bookingFee) > 0 ? formatNumber(idrToDisplay(data.bookingFee)) : ''}
+                    onChange={(e) => {
+                      const displayValue = parseAmountInput(e.target.value);
+                      const idrValue = displayToIdr(displayValue);
+                      onUpdate('bookingFee', idrValue);
+                      // Also update the percent value for consistency
+                      if (totalPriceIDR > 0) {
+                        const percent = (idrValue / totalPriceIDR) * 100;
+                        onUpdate('bookingFeePercent', Math.round(percent * 100) / 100);
+                      }
+                    }}
+                    placeholder="0"
+                    className="w-full rounded-lg bg-surface-alt border border-border px-4 py-3 pl-12 text-text-primary font-mono placeholder:text-text-muted focus:border-primary focus:outline-none"
+                  />
+                </div>
+                {totalPriceIDR > 0 && data.bookingFee > 0 && (
+                  <span className="text-xs text-text-muted">
+                    = {((data.bookingFee / totalPriceIDR) * 100).toFixed(2)}% of total price
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <label className="text-xs text-text-muted">Percentage of Total Price</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={data.bookingFeePercent > 0 ? data.bookingFeePercent : ''}
+                    onChange={(e) => {
+                      const inputVal = sanitizeDecimalInput(e.target.value);
+                      const percent = parseDecimalInput(inputVal) || 0;
+                      const clampedPercent = Math.min(100, Math.max(0, percent));
+                      onUpdate('bookingFeePercent', clampedPercent);
+                      // Calculate and update the amount
+                      if (totalPriceIDR > 0) {
+                        const idrValue = Math.round(totalPriceIDR * (clampedPercent / 100));
+                        onUpdate('bookingFee', idrValue);
+                      }
+                    }}
+                    placeholder="0"
+                    disabled={totalPriceIDR === 0}
+                    className={`w-full rounded-lg bg-surface-alt border border-border px-4 py-3 pr-8 text-text-primary font-mono placeholder:text-text-muted focus:border-primary focus:outline-none ${totalPriceIDR === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted font-mono">%</span>
+                </div>
+                {totalPriceIDR > 0 && data.bookingFeePercent > 0 && (
+                  <span className="text-xs text-text-muted">
+                    = {symbol} {formatNumber(idrToDisplay(data.bookingFee))}
+                  </span>
+                )}
+                {totalPriceIDR === 0 && (
+                  <span className="text-xs text-amber-600">Enter total price first</span>
+                )}
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-xs text-text-muted">Date</label>
