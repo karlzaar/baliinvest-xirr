@@ -16,7 +16,7 @@ interface Props {
   onBack: () => void;
 }
 
-const ReportView: React.FC<Props> = ({ data, assumptions, currency, user, onLogin, onBack }) => {
+const ReportView: React.FC<Props> = ({ data, assumptions, currency, user, onLogin: _onLogin, onBack }) => {
   const [showEmailCollector, setShowEmailCollector] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);

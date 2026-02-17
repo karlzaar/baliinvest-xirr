@@ -29,7 +29,7 @@ export function ReportView({
   formatDisplay,
   formatAbbrev,
   user,
-  onLogin,
+  onLogin: _onLogin,
   onBack,
 }: Props) {
   const [showEmailCollector, setShowEmailCollector] = useState(false);
