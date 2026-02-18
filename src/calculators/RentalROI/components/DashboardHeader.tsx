@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import type { YearlyData, CurrencyConfig } from '../types';
+import type { YearlyData, CurrencyConfig, Assumptions } from '../types';
 import { formatCurrency } from '../constants';
+import { useComparison } from '../../../lib/comparison-context';
+import { MAX_COMPARISONS } from '../../../lib/comparison-types';
 
 interface Props {
   data: YearlyData[];
   currency: CurrencyConfig;
+  assumptions: Assumptions;
+  onComparisonSaved?: () => void;
 }
 
 function MiniTooltip({ text }: { text: string }) {
@@ -29,14 +33,107 @@ function MiniTooltip({ text }: { text: string }) {
   );
 }
 
-const DashboardHeader: React.FC<Props> = ({ data, currency }) => {
+const DashboardHeader: React.FC<Props> = ({ data, currency, assumptions, onComparisonSaved }) => {
+  const { addRentalROIComparison, getCount } = useComparison();
+  const [saveLabel, setSaveLabel] = useState('');
+  const [showLabelInput, setShowLabelInput] = useState(false);
+
   const avgProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0) / data.length;
   const avgROI = data.reduce((s, i) => s + i.roiAfterManagement, 0) / data.length;
   const totalRevenue = data.reduce((s, i) => s + i.totalRevenue, 0);
   const totalProfit = data.reduce((s, i) => s + i.takeHomeProfit, 0);
+  const avgGopMargin = data.reduce((s, i) => s + i.gopMargin, 0) / data.length;
+  const paybackYears = assumptions.initialInvestment / (totalProfit / 10);
+
+  const getInvestmentRating = () => {
+    if (avgROI >= 12) return { grade: 'A+', label: 'Excellent' };
+    if (avgROI >= 10) return { grade: 'A', label: 'Very Good' };
+    if (avgROI >= 8) return { grade: 'B+', label: 'Good' };
+    if (avgROI >= 6) return { grade: 'B', label: 'Fair' };
+    if (avgROI >= 4) return { grade: 'C', label: 'Marginal' };
+    return { grade: 'D', label: 'Poor' };
+  };
+
+  const handleSaveToCompare = () => {
+    if (!showLabelInput) {
+      setShowLabelInput(true);
+      return;
+    }
+
+    const label = saveLabel.trim() || `Calculation ${getCount('rental-roi') + 1}`;
+    const success = addRentalROIComparison({
+      calculatorType: 'rental-roi',
+      label,
+      initialInvestment: assumptions.initialInvestment,
+      y1ADR: assumptions.y1ADR,
+      y1Occupancy: assumptions.y1Occupancy,
+      currency: currency.code,
+      avgROI,
+      totalRevenue,
+      totalProfit,
+      paybackYears,
+      avgGopMargin,
+      investmentRating: getInvestmentRating(),
+    });
+
+    if (success) {
+      onComparisonSaved?.();
+      setSaveLabel('');
+      setShowLabelInput(false);
+    }
+  };
+
+  const comparisonCount = getCount('rental-roi');
+  const isFull = comparisonCount >= MAX_COMPARISONS;
 
   return (
     <div className="sticky top-24 flex flex-col gap-4 z-40">
+      {/* Save to Compare Button */}
+      <div className="bg-white p-4 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-indigo-100">
+        {showLabelInput ? (
+          <div className="flex flex-col gap-2">
+            <input
+              type="text"
+              value={saveLabel}
+              onChange={(e) => setSaveLabel(e.target.value)}
+              placeholder="Enter label (optional)"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveToCompare()}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveToCompare}
+                className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => { setShowLabelInput(false); setSaveLabel(''); }}
+                className="px-3 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={handleSaveToCompare}
+            disabled={isFull}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+              isFull
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            <span>{isFull ? 'Comparison Full' : 'Save to Compare'}</span>
+            <span className="ml-1 text-xs opacity-70">({comparisonCount}/{MAX_COMPARISONS})</span>
+          </button>
+        )}
+      </div>
       <Card
         title="Avg Annual Cash Flow"
         value={formatCurrency(avgProfit, currency)}

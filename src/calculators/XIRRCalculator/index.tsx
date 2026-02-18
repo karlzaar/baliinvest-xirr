@@ -9,7 +9,9 @@ import {
 } from '../../components';
 import { Toast } from '../../components/ui/Toast';
 import { DraftSelector } from '../../components/ui/DraftSelector';
+import { ComparisonView } from '../../components/ui/ComparisonView';
 import { useAuth } from '../../lib/auth-context';
+import { useComparison } from '../../lib/comparison-context';
 import { ReportView } from './components/ReportView';
 import type { InvestmentData } from '../../types/investment';
 
@@ -44,7 +46,9 @@ export function XIRRCalculator() {
   const [isSaving, setIsSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { user } = useAuth();
+  const { getCount } = useComparison();
   const [showReportView, setShowReportView] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   // Pass user ID to isolate drafts per user
   const { drafts, saveDraft: saveArchivedDraft, deleteDraft } = useArchivedDrafts<InvestmentData>('xirr', user?.id);
@@ -296,13 +300,36 @@ export function XIRRCalculator() {
             <ProjectForecast
               result={result}
               symbol={symbol}
+              currency={currency}
+              data={data}
               formatDisplay={formatDisplay}
               onExportPDF={handleExportPDF}
+              onComparisonSaved={() => setToast({ message: 'Saved to comparison!', type: 'success' })}
               isPaymentValid={isPaymentValid}
             />
+
+            {/* View Comparisons Button */}
+            {getCount('xirr') > 0 && (
+              <button
+                onClick={() => setShowComparison(true)}
+                className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-surface rounded-xl text-sm font-bold text-text-secondary hover:bg-surface-alt border border-border transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>View Comparisons ({getCount('xirr')})</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Comparison Modal */}
+      <ComparisonView
+        isOpen={showComparison}
+        onClose={() => setShowComparison(false)}
+        calculatorType="xirr"
+      />
     </div>
   );
 }

@@ -1,16 +1,26 @@
-import type { XIRRResult } from '../../types/investment';
+import { useState } from 'react';
+import type { XIRRResult, InvestmentData } from '../../types/investment';
 import { Tooltip } from '../ui/Tooltip';
+import { useComparison } from '../../lib/comparison-context';
+import { MAX_COMPARISONS } from '../../lib/comparison-types';
 
 interface Props {
   result: XIRRResult;
   symbol: string;
+  currency: string;
+  data: InvestmentData;
   formatDisplay: (idr: number) => string;
   onExportPDF?: () => void;
+  onComparisonSaved?: () => void;
   isPaymentValid?: boolean;
   isExporting?: boolean;
 }
 
-export function ProjectForecast({ result, symbol, formatDisplay, onExportPDF, isPaymentValid = true, isExporting = false }: Props) {
+export function ProjectForecast({ result, symbol, currency, data, formatDisplay, onExportPDF, onComparisonSaved, isPaymentValid = true, isExporting = false }: Props) {
+  const { addXIRRComparison, getCount } = useComparison();
+  const [saveLabel, setSaveLabel] = useState('');
+  const [showLabelInput, setShowLabelInput] = useState(false);
+
   const xirrValue = result.rate * 100;
   const xirrPercent = xirrValue.toFixed(1);
   const isPositive = result.rate >= 0;
@@ -37,6 +47,47 @@ export function ProjectForecast({ result, symbol, formatDisplay, onExportPDF, is
     }
     return formatted;
   };
+
+  const getInvestmentRating = () => {
+    const xirr = result.rate * 100;
+    if (xirr >= 25) return { grade: 'A+', label: 'Excellent' };
+    if (xirr >= 20) return { grade: 'A', label: 'Very Good' };
+    if (xirr >= 15) return { grade: 'B+', label: 'Good' };
+    if (xirr >= 10) return { grade: 'B', label: 'Fair' };
+    if (xirr >= 5) return { grade: 'C', label: 'Marginal' };
+    return { grade: 'D', label: 'Poor' };
+  };
+
+  const handleSaveToCompare = () => {
+    if (!showLabelInput) {
+      setShowLabelInput(true);
+      return;
+    }
+
+    const label = saveLabel.trim() || `Calculation ${getCount('xirr') + 1}`;
+    const success = addXIRRComparison({
+      calculatorType: 'xirr',
+      label,
+      totalPrice: data.property.totalPrice,
+      projectedSalesPrice: data.exit.projectedSalesPrice,
+      currency,
+      location: data.property.location,
+      xirr: result.rate,
+      totalInvested: result.totalInvested,
+      netProfit: result.netProfit,
+      holdPeriodMonths: result.holdPeriodMonths,
+      investmentRating: getInvestmentRating(),
+    });
+
+    if (success) {
+      onComparisonSaved?.();
+      setSaveLabel('');
+      setShowLabelInput(false);
+    }
+  };
+
+  const comparisonCount = getCount('xirr');
+  const isFull = comparisonCount >= MAX_COMPARISONS;
 
   return (
     <div className="sticky top-36 flex flex-col gap-6">
@@ -122,6 +173,53 @@ export function ProjectForecast({ result, symbol, formatDisplay, onExportPDF, is
             <p className="text-xs text-red-500 mt-2 text-center">
               Fix payment validation errors before exporting
             </p>
+          )}
+        </div>
+
+        {/* Save to Compare */}
+        <div className="mt-4 pt-4 border-t border-border">
+          {showLabelInput ? (
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                value={saveLabel}
+                onChange={(e) => setSaveLabel(e.target.value)}
+                placeholder="Enter label (optional)"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:border-primary"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveToCompare()}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveToCompare}
+                  className="flex-1 bg-primary text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-primary-dark transition-colors"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => { setShowLabelInput(false); setSaveLabel(''); }}
+                  className="px-3 py-2 rounded-lg text-xs font-bold text-text-muted hover:bg-surface-alt transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleSaveToCompare}
+              disabled={isFull}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold transition-all ${
+                isFull
+                  ? 'bg-surface-alt text-text-muted cursor-not-allowed'
+                  : 'bg-primary-light text-primary hover:bg-primary/20'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              <span>{isFull ? 'Comparison Full' : 'Save to Compare'}</span>
+              <span className="ml-1 text-xs opacity-70">({comparisonCount}/{MAX_COMPARISONS})</span>
+            </button>
           )}
         </div>
       </div>
